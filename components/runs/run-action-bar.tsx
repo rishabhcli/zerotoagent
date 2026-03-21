@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 export function RunActionBar({
   runId,
@@ -44,14 +45,24 @@ export function RunActionBar({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 p-4">
+    <GlassSurface
+      variant="quiet-panel"
+      motionStrength={0.22}
+      className="flex flex-col gap-3 p-4"
+    >
       <div className="flex flex-wrap items-center gap-3">
         {hasReceipts ? (
           <a
             href={`/api/runs/${runId}/receipts`}
-            className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
+            className="block focus:outline-none"
           >
-            Download Receipts
+            <GlassSurface
+              variant="pill"
+              motionStrength={0.3}
+              className="inline-flex px-4 py-2 text-sm font-medium text-foreground"
+            >
+              <span>Download Receipts</span>
+            </GlassSurface>
           </a>
         ) : null}
         {canReplay ? (
@@ -64,13 +75,19 @@ export function RunActionBar({
             href={sentryTraceUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
+            className="block focus:outline-none"
           >
-            Open Trace in Sentry
+            <GlassSurface
+              variant="pill"
+              motionStrength={0.3}
+              className="inline-flex px-4 py-2 text-sm font-medium text-foreground"
+            >
+              <span>Open Trace in Sentry</span>
+            </GlassSurface>
           </a>
         ) : null}
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-    </div>
+    </GlassSurface>
   );
 }

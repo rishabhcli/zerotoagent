@@ -23,7 +23,7 @@ export async function createReceiptArchive(input: {
   zip.file(
     "summary.md",
     [
-      `# PatchPilot Receipt`,
+      `# RePro Receipt`,
       ``,
       `- Run ID: \`${manifest.runId}\``,
       `- Status: ${manifest.status}`,

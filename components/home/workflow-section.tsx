@@ -1,92 +1,114 @@
 import {
-  Search,
   Bug,
-  Wrench,
-  ShieldCheck,
   GitPullRequest,
+  Search,
+  ShieldCheck,
+  Wrench,
 } from "lucide-react";
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { cn } from "@/lib/utils";
 
 const steps = [
   {
     icon: Search,
     title: "Diagnose",
-    description: "Parses the incident, identifies the root cause and affected files",
-    color: "from-blue-500 to-cyan-400",
+    description: "Normalize the incident into one run.",
+    footer: "incident.parsed",
+    accent: "from-sky-400/60 via-sky-300/25 to-transparent",
   },
   {
     icon: Bug,
     title: "Reproduce",
-    description: "Spins up an isolated sandbox and reproduces the failure",
-    color: "from-amber-500 to-orange-400",
+    description: "Replay the failure in a sandbox.",
+    footer: "reproduction.completed",
+    accent: "from-amber-300/60 via-orange-300/20 to-transparent",
   },
   {
     icon: Wrench,
     title: "Patch",
-    description: "Generates a targeted fix and applies it to the codebase",
-    color: "from-primary to-indigo-400",
+    description: "Generate the smallest useful diff.",
+    footer: "patch.generated",
+    accent: "from-indigo-300/55 via-primary/20 to-transparent",
   },
   {
     icon: ShieldCheck,
     title: "Verify",
-    description: "Runs the full test suite to confirm the fix and check for regressions",
-    color: "from-emerald-500 to-green-400",
+    description: "Run checks and surface the result.",
+    footer: "verification.completed",
+    accent: "from-emerald-300/60 via-emerald-300/18 to-transparent",
   },
   {
     icon: GitPullRequest,
-    title: "PR",
-    description: "Waits for your approval, then opens a verified pull request",
-    color: "from-purple-500 to-pink-400",
+    title: "Approve",
+    description: "Pause until a human decides.",
+    footer: "approval.requested",
+    accent: "from-rose-300/60 via-pink-300/18 to-transparent",
   },
 ];
 
 export function WorkflowSection() {
   return (
-    <section
-      id="workflow"
-      className="relative z-10 mx-auto w-full max-w-6xl px-6 py-24 md:py-32"
-    >
-      <div className="mb-16 text-center animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-        <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary">
-          The Pipeline
-        </p>
-        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-          Five steps. Zero guesswork.
+    <section id="workflow" className="home-section">
+      <div className="mb-12 max-w-3xl space-y-4">
+        <p className="section-kicker">Pipeline</p>
+        <h2 className="display-section text-foreground">
+          One flow from signal to gate.
         </h2>
+        <p className="body-lead max-w-2xl">
+          Evidence first. Patch second. Human approval before output.
+        </p>
       </div>
 
-      <div className="relative grid gap-6 md:grid-cols-5">
-        {/* Connecting line */}
-        <div className="absolute top-1/2 left-[10%] right-[10%] hidden h-px bg-gradient-to-r from-transparent via-white/20 to-transparent md:block animate-scale-x-in" />
+      <div className="relative">
+        <div className="pointer-events-none absolute left-12 right-12 top-1/2 hidden h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-white/[0.16] to-transparent lg:block" />
 
-        {steps.map((step, i) => {
-          const Icon = step.icon;
-          return (
-            <div
-              key={step.title}
-              className="group relative flex flex-col items-center gap-4 rounded-3xl liquid-glass p-6 text-center transition-all duration-300 hover:bg-white/[0.12] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] animate-fade-in-up"
-              style={{ animationDelay: `${0.2 + i * 0.12}s` }}
-            >
-              {/* Step number */}
-              <span className="absolute -top-3 right-4 flex size-6 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-muted-foreground">
-                {i + 1}
-              </span>
+        <div className="grid gap-4 lg:grid-cols-5">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
 
-              {/* Icon */}
-              <div
-                className={`flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${step.color} shadow-lg transition-transform duration-300 group-hover:scale-110`}
+            return (
+              <GlassSurface
+                key={step.title}
+                variant="card"
+                motionStrength={0.78}
+                className={cn(
+                  "relative flex h-full flex-col gap-5 p-5",
+                  "lg:after:absolute lg:after:right-[-18px] lg:after:top-1/2 lg:after:h-px lg:after:w-9 lg:after:-translate-y-1/2 lg:after:bg-gradient-to-r lg:after:from-white/[0.18] lg:after:to-transparent",
+                  index === steps.length - 1 && "lg:after:hidden",
+                  index % 2 === 1 ? "lg:translate-y-8" : "lg:-translate-y-1"
+                )}
               >
-                <Icon className="size-5 text-white" />
-              </div>
+                <div
+                  className={cn(
+                    "absolute inset-x-0 top-0 h-28 rounded-t-[inherit] bg-gradient-to-b",
+                    step.accent
+                  )}
+                />
+                <div className="relative z-10 flex items-start justify-between gap-3">
+                  <div className="flex size-12 items-center justify-center rounded-[1.2rem] bg-white/[0.08] text-primary">
+                    <Icon className="size-5" />
+                  </div>
+                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    0{index + 1}
+                  </span>
+                </div>
 
-              <h3 className="text-sm font-semibold tracking-wide">
-                {step.title}
-              </h3>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {step.description}
-              </p>
-            </div>
-          );
-        })}
+                <div className="relative z-10">
+                  <h3 className="text-xl font-semibold tracking-tight text-foreground">
+                    {step.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-5 text-muted-foreground">
+                    {step.description}
+                  </p>
+                </div>
+
+                <div className="relative z-10 mt-auto rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[0.72rem] uppercase tracking-[0.22em] text-muted-foreground">
+                  {step.footer}
+                </div>
+              </GlassSurface>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

@@ -1,8 +1,8 @@
 import { start } from "workflow/api";
 import { patchPilotIncidentToPR } from "@/workflows/patchpilot";
-import { createPatchPilotRunId } from "@/lib/patchpilot/run-id";
+import { createReProRunId } from "@/lib/patchpilot/run-id";
 import { getSupabaseAdmin } from "@/lib/patchpilot/supabase";
-import type { PatchPilotWorkflowInput } from "@/workflows/patchpilot";
+import type { ReProWorkflowInput } from "@/workflows/patchpilot";
 
 export async function POST(
   request: Request,
@@ -31,13 +31,13 @@ export async function POST(
     );
   }
 
-  const replayRunId = createPatchPilotRunId();
+  const replayRunId = createReProRunId();
   const workflowInput = {
-    ...(run.workflow_input as PatchPilotWorkflowInput),
+    ...(run.workflow_input as ReProWorkflowInput),
     runId: replayRunId,
     mode: "dry_run",
     replayOfRunId: runId,
-  } satisfies PatchPilotWorkflowInput;
+  } satisfies ReProWorkflowInput;
 
   const workflowRun = await start(patchPilotIncidentToPR, [workflowInput]);
 

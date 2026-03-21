@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { NewRunForm } from "@/components/runs/new-run-form";
 import { requireAuth } from "@/lib/auth-guard";
 import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
@@ -65,19 +65,30 @@ export default async function NewRunPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">New Run</h1>
-        <p className="max-w-3xl text-muted-foreground">
-          Start a verified PatchPilot run from the web UI. Upload evidence, choose the allowlisted repo scope, and pick whether to stop at a dry run or continue to approval-gated PR creation.
+      <GlassSurface
+        variant="hero-panel"
+        motionStrength={0.3}
+        className="p-8 md:p-10"
+      >
+        <p className="section-kicker">New run</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">
+          Start a verified run.
+        </h1>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
+          Add the incident, choose the repo, then verify or stop at approval.
         </p>
-      </div>
+      </GlassSurface>
 
       {repos.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            No allowlisted repos are configured yet. Add a repo policy in the admin console first.
-          </CardContent>
-        </Card>
+        <GlassSurface
+          variant="card"
+          motionStrength={0.26}
+          className="p-10 text-center text-muted-foreground"
+        >
+          <p>
+            No allowlisted repos yet. Add one in admin first.
+          </p>
+        </GlassSurface>
       ) : (
         <NewRunForm repos={repos} />
       )}

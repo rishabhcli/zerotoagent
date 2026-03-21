@@ -3,7 +3,7 @@ import { z } from "zod";
 import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
 import { getPrimaryModel } from "@/lib/ai/models";
 import { buildArtifactModelContent } from "@/lib/patchpilot/artifacts";
-import type { PatchPilotWorkflowInput } from "../patchpilot";
+import type { ReProWorkflowInput } from "../patchpilot";
 
 const ParsedIncidentSchema = z.object({
   normalizedSummary: z.string().describe("A clear, normalized summary of the incident"),
@@ -30,7 +30,7 @@ const ParsedIncidentSchema = z.object({
 export type ParsedIncident = z.infer<typeof ParsedIncidentSchema>;
 
 export async function parseIncidentStep(
-  input: PatchPilotWorkflowInput
+  input: ReProWorkflowInput
 ): Promise<ParsedIncident> {
   "use step";
   const artifactParts = await buildArtifactModelContent(

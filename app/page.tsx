@@ -4,7 +4,6 @@ import { WorkflowSection } from "@/components/home/workflow-section";
 import { TerminalDemo } from "@/components/home/terminal-demo";
 import { FeaturesSection } from "@/components/home/features-section";
 import { CtaSection } from "@/components/home/cta-section";
-import { FloatingOrbs } from "@/components/home/floating-orbs";
 
 export default async function Home() {
   const githubAuthEnabled = Boolean(
@@ -15,20 +14,18 @@ export default async function Home() {
   );
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background">
-      <FloatingOrbs />
+    <main id="top" className="page-shell overflow-hidden">
       <Navbar githubAuthEnabled={githubAuthEnabled} />
       <HeroSection />
       <WorkflowSection />
       <TerminalDemo />
-      <div id="features">
-        <FeaturesSection />
-      </div>
-      <CtaSection />
+      <FeaturesSection />
+      <CtaSection githubAuthEnabled={githubAuthEnabled} />
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/[0.06] py-8 text-center text-xs text-muted-foreground/60">
-        <p>Built with PatchPilot &middot; Incident-to-PR verified fix agent</p>
+      <footer className="content-shell pb-10 pt-4 text-xs text-muted-foreground/70">
+        <div className="border-t border-white/[0.08] pt-6 text-center">
+          Built with RePro · Incident-to-PR verified fix agent
+        </div>
       </footer>
     </main>
   );

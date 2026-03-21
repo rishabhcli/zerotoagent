@@ -188,8 +188,9 @@ export async function syncGitHubInstallationRecipes(): Promise<RecipeSyncSummary
     );
   }
 
+  const existingRecipeRows = ((existingRecipes ?? []) as unknown) as ExistingRecipeRecord[];
   const syncedRecipes = mergeInstalledRepositoriesIntoRecipes({
-    existingRecipes: (existingRecipes as ExistingRecipeRecord[]) ?? [],
+    existingRecipes: existingRecipeRows,
     installedRepositories,
     syncedAt: new Date().toISOString(),
   });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { RunStatusBadge } from "@/components/runs/run-status-badge";
 import { RunTimeline } from "@/components/runs/run-timeline";
 import { ApprovalCard } from "@/components/runs/approval-card";
@@ -127,31 +128,38 @@ export default async function RunDetailPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Run</h1>
-            <RunStatusBadge status={run.status} />
+    <div className="space-y-6">
+      <GlassSurface
+        variant="hero-panel"
+        motionStrength={0.24}
+        className="p-8 md:p-10"
+      >
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="section-kicker">Run trace</p>
+              <RunStatusBadge status={run.status} />
+            </div>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">
+              {run.repo_owner}/{run.repo_name}
+            </h1>
+            <p className="mt-3 font-mono text-sm text-muted-foreground">{run.id}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {run.base_branch} · {new Date(run.created_at).toLocaleString()}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {run.source} · {run.mode === "dry_run" ? "Dry Run" : "Apply + Verify"} · {run.environment}
+            </p>
           </div>
-          <p className="font-mono text-sm text-muted-foreground mt-1">{run.id}</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {run.repo_owner}/{run.repo_name} ({run.base_branch})
-            {" — "}
-            {new Date(run.created_at).toLocaleString()}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {run.source} · {run.mode === "dry_run" ? "Dry Run" : "Apply + Verify"} · {run.environment}
-          </p>
+
+          <Link
+            href="/dashboard"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Back to runs
+          </Link>
         </div>
-        <Link
-          href="/dashboard"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          Back to runs
-        </Link>
-      </div>
+      </GlassSurface>
 
       <Separator />
 
@@ -162,7 +170,7 @@ export default async function RunDetailPage({
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card interactive>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Patch Confidence</CardTitle>
           </CardHeader>
@@ -170,7 +178,7 @@ export default async function RunDetailPage({
             {run.confidence_score != null ? `${run.confidence_score}/100` : "—"}
           </CardContent>
         </Card>
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card interactive>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Reproducibility</CardTitle>
           </CardHeader>
@@ -178,7 +186,7 @@ export default async function RunDetailPage({
             {run.reproducibility_score != null ? `${run.reproducibility_score}/100` : "—"}
           </CardContent>
         </Card>
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card interactive>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Observability</CardTitle>
           </CardHeader>
@@ -186,7 +194,7 @@ export default async function RunDetailPage({
             {run.observability_coverage != null ? `${run.observability_coverage}%` : "—"}
           </CardContent>
         </Card>
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card interactive>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Trace ID</CardTitle>
           </CardHeader>
@@ -197,7 +205,7 @@ export default async function RunDetailPage({
       </div>
 
       {run.outcome_summary ? (
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg">Outcome Summary</CardTitle>
           </CardHeader>
@@ -230,7 +238,7 @@ export default async function RunDetailPage({
 
       {/* PR link */}
       {pr && (
-        <Card className="liquid-glass !rounded-[24px] border-green-400/20">
+        <Card className="border-green-400/20">
           <CardHeader>
             <CardTitle className="text-lg">Pull Request</CardTitle>
           </CardHeader>
@@ -248,7 +256,7 @@ export default async function RunDetailPage({
       )}
 
       {ci && (
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg">GitHub Actions</CardTitle>
           </CardHeader>
@@ -274,7 +282,7 @@ export default async function RunDetailPage({
 
       {/* Patch preview */}
       {patch && (
-        <Card className="liquid-glass !rounded-[24px] border-0">
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg">Patch</CardTitle>
           </CardHeader>
@@ -282,7 +290,7 @@ export default async function RunDetailPage({
             {patch.diffstat ? (
               <p className="text-sm text-muted-foreground">Diffstat: {patch.diffstat}</p>
             ) : null}
-            <pre className="text-xs bg-muted rounded-lg p-4 overflow-x-auto max-h-96">
+            <pre className="max-h-96 overflow-x-auto rounded-[1.25rem] bg-white/[0.05] p-4 text-xs">
               {patch.unified_diff || "(empty diff)"}
             </pre>
           </CardContent>

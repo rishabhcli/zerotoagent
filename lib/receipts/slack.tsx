@@ -10,7 +10,7 @@ export function runStartedCard(opts: {
   traceUrl?: string;
 }) {
   return Card({
-    title: "PatchPilot — Run Started",
+    title: "RePro — Run Started",
     children: [
       CardText(`Run ID: \`${opts.runId}\``),
       CardText(`Repo: ${opts.repo}`),
@@ -67,7 +67,7 @@ export function approvalRequestCard(opts: {
   return Card({
     title: "Approval Required: Open PR?",
     children: [
-      CardText("What PatchPilot wants to do:", { style: "bold" }),
+      CardText("What RePro wants to do:", { style: "bold" }),
       CardText(opts.prTitle ?? "Open a pull request for the verified patch."),
       Divider(),
       Fields([
@@ -97,7 +97,7 @@ export function finalReceiptCard(opts: {
   traceUrl?: string;
 }) {
   return Card({
-    title: opts.prUrl ? "PatchPilot — PR Created" : "PatchPilot — Run Complete",
+    title: opts.prUrl ? "RePro — PR Created" : "RePro — Run Complete",
     children: [
       ...(opts.prNumber != null ? [CardText(`PR: #${opts.prNumber}`, { style: "bold" })] : []),
       CardText(opts.summary.slice(0, 300)),
@@ -123,7 +123,7 @@ export function runFailedCard(opts: {
   traceUrl?: string;
 }) {
   return Card({
-    title: "PatchPilot — Run Failed",
+    title: "RePro — Run Failed",
     children: [
       CardText(`Run \`${opts.runId}\` failed.`),
       CardText(opts.reason.slice(0, 500)),

@@ -2,6 +2,7 @@ import { createHook, FatalError, sleep } from "workflow";
 import { computeObservabilityCoverage, computePatchConfidence, computeReproducibilityScore } from "@/lib/patchpilot/scoring";
 import type { RunStartPayload } from "@/lib/patchpilot/contracts";
 import { requireRepoPolicy } from "@/lib/patchpilot/policy";
+import { getRunTraceContext, Sentry } from "@/lib/sentry";
 import { emitRunEvent } from "./steps/emit";
 import { parseIncidentStep } from "./steps/parse";
 import { extractFilesStep } from "./steps/files";
@@ -21,7 +22,7 @@ import {
   updateRunRecord,
 } from "./steps/db";
 
-export type PatchPilotWorkflowInput = RunStartPayload & { runId: string };
+export type ReProWorkflowInput = RunStartPayload & { runId: string };
 
 function buildPatchSummary(diff: string) {
   const fileCount = diff.split("\n").filter((line) => line.startsWith("+++ b/")).length;
@@ -31,8 +32,8 @@ function buildPatchSummary(diff: string) {
 }
 
 function buildOutcomeSummary(input: {
-  repo: PatchPilotWorkflowInput["repo"];
-  mode: PatchPilotWorkflowInput["mode"];
+  repo: ReProWorkflowInput["repo"];
+  mode: ReProWorkflowInput["mode"];
   status: "completed" | "failed" | "rejected" | "blocked";
   patchSummary: string;
 }) {
@@ -50,75 +51,96 @@ function buildOutcomeSummary(input: {
   return `${actionSummary} Repo: ${input.repo.owner}/${input.repo.name}. ${input.patchSummary}`;
 }
 
-export async function patchPilotIncidentToPR(input: PatchPilotWorkflowInput) {
+export async function patchPilotIncidentToPR(input: ReProWorkflowInput) {
   "use workflow";
 
   const { runId, repo, incident, config } = input;
-  let seq = 1;
-  let ciSummary: string | null = null;
-  let ciUrl: string | null = null;
-  let ciPassed: boolean | null = null;
-  const totalTrackedSteps = 11;
-  let completedReceiptSteps = 0;
-
-  await createRunRecord({
-    runId,
-    repoOwner: repo.owner,
-    repoName: repo.name,
-    defaultBranch: repo.defaultBranch,
-    source: input.source,
-    mode: input.mode,
-    environment: input.environment,
-    workflowInput: input,
-    threadContext: input.threadContext,
-    voiceContext: input.voiceContext,
-  });
-
-  await storeArtifacts({
-    runId,
-    artifacts: incident.artifacts.map((artifact) => ({
-      kind: artifact.kind,
-      storagePath: artifact.storagePath,
-      mimeType: artifact.mimeType,
-      filename: artifact.filename,
-      source: artifact.source,
-      sizeBytes: artifact.sizeBytes,
-      summary: artifact.summary,
-    })),
-  });
-
-  await emitRunEvent({
-    runId,
-    seq: seq++,
-    type: "run.started",
-    data: {
-      source: input.source,
-      mode: input.mode,
-      environment: input.environment,
-      repo,
-      artifactCount: incident.artifacts.length,
+  return Sentry.startSpan(
+    {
+      name: `patchpilot.run ${repo.owner}/${repo.name}`,
+      op: "patchpilot.run",
+      forceTransaction: true,
+      attributes: {
+        "patchpilot.run_id": runId,
+        "patchpilot.repo": `${repo.owner}/${repo.name}`,
+        "patchpilot.mode": input.mode,
+        "patchpilot.source": input.source,
+      },
     },
-  });
+    async (span) => {
+      let seq = 1;
+      let ciSummary: string | null = null;
+      let ciUrl: string | null = null;
+      let ciPassed: boolean | null = null;
+      const totalTrackedSteps = 11;
+      let completedReceiptSteps = 0;
 
-  await recordRunStep({
-    runId,
-    stepType: "intake",
-    status: "completed",
-    title: "Ingest",
-    summary: `Captured ${incident.artifacts.length} artifact(s) and queued a ${input.mode} run from ${input.source}.`,
-    evidence: { environment: input.environment, repo },
-    nextAction: "Parse evidence",
-    durationMs: 1,
-  });
-  completedReceiptSteps += 1;
-  await emitRunEvent({
-    runId,
-    seq: seq++,
-    type: "intake.completed",
-    data: { artifactCount: incident.artifacts.length, source: input.source },
-  });
+      await createRunRecord({
+        runId,
+        repoOwner: repo.owner,
+        repoName: repo.name,
+        defaultBranch: repo.defaultBranch,
+        source: input.source,
+        mode: input.mode,
+        environment: input.environment,
+        workflowInput: input,
+        threadContext: input.threadContext,
+        voiceContext: input.voiceContext,
+      });
 
-  try {
+      const traceContext = getRunTraceContext(span);
+      await updateRunRecord({
+        runId,
+        traceId: traceContext.traceId,
+        sentryTraceUrl: traceContext.sentryTraceUrl,
+      });
+
+      await storeArtifacts({
+        runId,
+        artifacts: incident.artifacts.map((artifact) => ({
+          kind: artifact.kind,
+          storagePath: artifact.storagePath,
+          mimeType: artifact.mimeType,
+          filename: artifact.filename,
+          source: artifact.source,
+          sizeBytes: artifact.sizeBytes,
+          summary: artifact.summary,
+        })),
+      });
+
+      await emitRunEvent({
+        runId,
+        seq: seq++,
+        type: "run.started",
+        data: {
+          source: input.source,
+          mode: input.mode,
+          environment: input.environment,
+          repo,
+          artifactCount: incident.artifacts.length,
+          traceId: traceContext.traceId,
+        },
+      });
+
+      await recordRunStep({
+        runId,
+        stepType: "intake",
+        status: "completed",
+        title: "Ingest",
+        summary: `Captured ${incident.artifacts.length} artifact(s) and queued a ${input.mode} run from ${input.source}.`,
+        evidence: { environment: input.environment, repo, traceId: traceContext.traceId },
+        nextAction: "Parse evidence",
+        durationMs: 1,
+      });
+      completedReceiptSteps += 1;
+      await emitRunEvent({
+        runId,
+        seq: seq++,
+        type: "intake.completed",
+        data: { artifactCount: incident.artifacts.length, source: input.source },
+      });
+
+      try {
     const policyStartedAt = Date.now();
     await recordRunStep({
       runId,
@@ -833,61 +855,63 @@ export async function patchPilotIncidentToPR(input: PatchPilotWorkflowInput) {
       status: "completed" as const,
       pr,
     };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const patchSummary = "Patch flow ended before a PR could be created.";
-    const outcomeSummary = buildOutcomeSummary({
-      repo,
-      mode: input.mode,
-      status: "failed",
-      patchSummary,
-    });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const patchSummary = "Patch flow ended before a PR could be created.";
+        const outcomeSummary = buildOutcomeSummary({
+          repo,
+          mode: input.mode,
+          status: "failed",
+          patchSummary,
+        });
 
-    await updateRunRecord({
-      runId,
-      status: "failed",
-      outcomeSummary: `${outcomeSummary} ${message}`.trim(),
-    });
-    const confidence = computePatchConfidence({
-      reproduced: false,
-      testsPassed: false,
-      flaky: false,
-      diffLineCount: 0,
-      ciPassed: null,
-      missingInfoCount: 0,
-    });
-    const reproducibility = computeReproducibilityScore({
-      reproduced: false,
-      replayCount: 0,
-      successfulReplays: 0,
-      flaky: false,
-    });
-    const observabilityCoverage = computeObservabilityCoverage(totalTrackedSteps, completedReceiptSteps);
-    await finalizeReceiptsStep({
-      runId,
-      workflowInput: input,
-      summary: `${outcomeSummary} ${message}`.trim(),
-      patchSummary,
-      status: "failed",
-      confidence,
-      reproducibility,
-      observabilityCoverage,
-    });
-    await emitRunEvent({
-      runId,
-      seq: seq++,
-      type: "receipts.created",
-      data: { status: "failed" },
-    });
-    await emitRunEvent({
-      runId,
-      seq: seq++,
-      type: "run.failed",
-      data: {
-        error: message,
-      },
-    });
+        await updateRunRecord({
+          runId,
+          status: "failed",
+          outcomeSummary: `${outcomeSummary} ${message}`.trim(),
+        });
+        const confidence = computePatchConfidence({
+          reproduced: false,
+          testsPassed: false,
+          flaky: false,
+          diffLineCount: 0,
+          ciPassed: null,
+          missingInfoCount: 0,
+        });
+        const reproducibility = computeReproducibilityScore({
+          reproduced: false,
+          replayCount: 0,
+          successfulReplays: 0,
+          flaky: false,
+        });
+        const observabilityCoverage = computeObservabilityCoverage(totalTrackedSteps, completedReceiptSteps);
+        await finalizeReceiptsStep({
+          runId,
+          workflowInput: input,
+          summary: `${outcomeSummary} ${message}`.trim(),
+          patchSummary,
+          status: "failed",
+          confidence,
+          reproducibility,
+          observabilityCoverage,
+        });
+        await emitRunEvent({
+          runId,
+          seq: seq++,
+          type: "receipts.created",
+          data: { status: "failed" },
+        });
+        await emitRunEvent({
+          runId,
+          seq: seq++,
+          type: "run.failed",
+          data: {
+            error: message,
+          },
+        });
 
-    throw new FatalError(message);
-  }
+        throw new FatalError(message);
+      }
+    }
+  );
 }

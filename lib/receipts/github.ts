@@ -7,7 +7,7 @@ export function runStartedComment(opts: {
   traceUrl?: string;
 }) {
   return [
-    `## PatchPilot — Run Started`,
+    `## RePro — Run Started`,
     `- **Run ID**: \`${opts.runId}\``,
     `- **Repo**: ${opts.repo}`,
     `- **Status**: In Progress`,
@@ -39,7 +39,7 @@ export function approvalRequestComment(opts: {
   traceUrl?: string;
 }) {
   return [
-    `## PatchPilot — Approval Required`,
+    `## RePro — Approval Required`,
     `- **Run ID**: \`${opts.runId}\``,
     `- **Proposed PR**: ${opts.prTitle ?? "Verified fix ready for PR creation"}`,
     ...(opts.requiredRole ? [`- **Required role**: ${opts.requiredRole}`] : []),
@@ -77,7 +77,7 @@ export function finalReceiptComment(opts: {
   traceUrl?: string;
 }) {
   return [
-    `## PatchPilot — Verified Fix`,
+    `## RePro — Verified Fix`,
     ...(opts.prUrl && opts.prNumber != null ? [`- **PR**: [#${opts.prNumber}](${opts.prUrl})`] : []),
     `- **Run ID**: \`${opts.runId}\``,
     ...(opts.confidence != null ? [`- **Patch confidence**: ${opts.confidence}/100`] : []),
@@ -102,7 +102,7 @@ export function runFailedComment(opts: {
   traceUrl?: string;
 }) {
   return [
-    `## PatchPilot — Run Failed`,
+    `## RePro — Run Failed`,
     `- **Run ID**: \`${opts.runId}\``,
     "",
     `### Reason`,

@@ -6,26 +6,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useRunEvents, type RunEvent } from "@/hooks/use-run-events";
+import { useRunTrace, type RunEvent, type RunStep } from "@/hooks/use-run-events";
 import { RunStatusBadge } from "@/components/runs/run-status-badge";
-import { RUN_EVENT_LABELS, RUN_STEP_TITLES, type RunStepType } from "@/lib/patchpilot/contracts";
+import { RUN_EVENT_LABELS, RUN_STEP_TITLES } from "@/lib/patchpilot/contracts";
 
-export interface RunStep {
-  id: string;
-  run_id: string;
-  step_type: RunStepType;
-  status: string;
-  title: string;
-  summary: string | null;
-  decision: Record<string, unknown> | null;
-  evidence: Record<string, unknown> | null;
-  tool_receipts: unknown[] | null;
-  next_action: string | null;
-  retry_count: number;
-  started_at: string;
-  ended_at: string | null;
-  duration_ms: number | null;
-}
+export type { RunStep } from "@/hooks/use-run-events";
 
 function formatTimestamp(ts: string) {
   return new Date(ts).toLocaleTimeString();
@@ -66,9 +51,9 @@ export function RunTimeline({
   initialSteps: RunStep[];
   initialEvents: RunEvent[];
 }) {
-  const events = useRunEvents(runId, initialEvents);
+  const { events, steps } = useRunTrace(runId, initialEvents, initialSteps);
 
-  if (events.length === 0 && initialSteps.length === 0) {
+  if (events.length === 0 && steps.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">No events yet.</p>
     );
@@ -80,11 +65,17 @@ export function RunTimeline({
         <div>
           <h3 className="text-base font-semibold">Step Timeline</h3>
           <p className="text-sm text-muted-foreground">
-            What PatchPilot decided, what it ran, and what happens next.
+            What RePro decided, what it ran, and what happens next.
           </p>
         </div>
         <Accordion className="space-y-3">
-          {initialSteps.map((step) => (
+          {[...steps]
+            .sort((left, right) => {
+              const leftTimestamp = new Date(left.started_at).getTime();
+              const rightTimestamp = new Date(right.started_at).getTime();
+              return leftTimestamp - rightTimestamp;
+            })
+            .map((step) => (
             <AccordionItem key={step.id} value={step.id} className="rounded-2xl border border-border/60 bg-card/60 px-4">
               <AccordionTrigger className="py-4 hover:no-underline">
                 <div className="flex w-full flex-col gap-3 text-left sm:flex-row sm:items-center sm:justify-between">
@@ -108,7 +99,7 @@ export function RunTimeline({
                 {step.decision && Object.keys(step.decision).length > 0 ? (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      What PatchPilot decided
+                      What RePro decided
                     </p>
                     <DataDisplay data={step.decision} />
                   </div>
@@ -124,7 +115,7 @@ export function RunTimeline({
                 {step.tool_receipts && step.tool_receipts.length > 0 ? (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      What PatchPilot did
+                      What RePro did
                     </p>
                     <pre className="overflow-x-auto rounded-xl bg-muted p-3 text-xs">
                       {JSON.stringify(step.tool_receipts, null, 2)}
@@ -152,7 +143,7 @@ export function RunTimeline({
         <div className="relative">
           <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
           <Accordion className="space-y-2">
-            {events
+            {[...events]
               .sort((a, b) => a.seq - b.seq)
               .map((event) => (
                 <AccordionItem key={event.id} value={String(event.id)} className="border-none">

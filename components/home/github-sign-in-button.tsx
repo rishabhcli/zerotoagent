@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Github, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
 import { githubOAuthScopes } from "@/lib/github-auth";
 
@@ -13,7 +14,7 @@ export function GitHubSignInButton({ enabled }: GitHubSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSignIn() {
-    if (isLoading) return;
+    if (isLoading || !enabled) return;
 
     setIsLoading(true);
     try {
@@ -23,25 +24,31 @@ export function GitHubSignInButton({ enabled }: GitHubSignInButtonProps) {
         newUserCallbackURL: "/dashboard",
         scopes: [...githubOAuthScopes],
       });
-      if (result?.error) setIsLoading(false);
+
+      if (result?.error) {
+        setIsLoading(false);
+      }
     } catch {
       setIsLoading(false);
     }
   }
 
   return (
-    <button
+    <Button
       type="button"
+      size="sm"
+      variant="outline"
       onClick={handleSignIn}
-      disabled={isLoading}
-      className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-medium text-foreground backdrop-blur-lg transition hover:bg-white/[0.1] disabled:opacity-50"
+      disabled={!enabled || isLoading}
+      className="min-w-[8.75rem] justify-center"
+      title={enabled ? "Sign in with GitHub" : "GitHub auth is not configured"}
     >
       {isLoading ? (
         <Loader2 className="size-3.5 animate-spin" />
       ) : (
         <Github className="size-3.5" />
       )}
-      {isLoading ? "Redirecting..." : "Sign in"}
-    </button>
+      {isLoading ? "Redirecting..." : enabled ? "Sign in" : "Auth offline"}
+    </Button>
   );
 }

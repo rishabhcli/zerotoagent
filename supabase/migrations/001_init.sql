@@ -1,6 +1,6 @@
--- PatchPilot schema: Phase 1 init
+-- RePro schema: Phase 1 init
 
--- Runs table: one row per PatchPilot run
+-- Runs table: one row per RePro run
 CREATE TABLE IF NOT EXISTS runs (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

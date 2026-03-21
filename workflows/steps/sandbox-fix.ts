@@ -131,7 +131,7 @@ export async function sandboxFixStep(input: {
         remediation: [
           "Upload additional logs or a request ID",
           "Choose a more specific environment profile",
-          "Run PatchPilot replay after adding a repro command in the repo policy",
+          "Run RePro replay after adding a repro command in the repo policy",
         ],
       };
     }

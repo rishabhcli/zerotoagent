@@ -1,34 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import type { GlassSurfaceVariantProps } from "@/components/ui/glass-surface.styles";
+import { glassSurfaceVariants } from "@/components/ui/glass-surface.styles";
 import { cn } from "@/lib/utils";
-
-export const glassSurfaceVariants = cva("glass-surface", {
-  variants: {
-    variant: {
-      nav: "glass-nav",
-      "hero-panel": "glass-hero-panel",
-      card: "glass-card",
-      button: "glass-button",
-      pill: "glass-pill",
-      "quiet-panel": "glass-quiet-panel",
-      table: "glass-table-shell",
-    },
-    interactive: {
-      true: "surface-interactive",
-      false: "",
-    },
-  },
-  defaultVariants: {
-    variant: "card",
-    interactive: true,
-  },
-});
 
 type SurfaceMotionOptions = {
   disabled?: boolean;
-  strength?: number;
 };
 
 const motionMediaQuery =
@@ -44,7 +22,7 @@ function composeRefs<T>(
         ref(node);
         return;
       }
-      ref.current = node;
+      (ref as React.MutableRefObject<T | null>).current = node;
     });
   };
 }
@@ -59,7 +37,6 @@ function callAll<E>(
 
 export function useInteractiveSurface<T extends HTMLElement>({
   disabled = false,
-  strength = 1,
 }: SurfaceMotionOptions = {}) {
   const ref = React.useRef<T | null>(null);
   const canTrackRef = React.useRef(false);
@@ -69,11 +46,9 @@ export function useInteractiveSurface<T extends HTMLElement>({
     if (!node) return;
 
     node.dataset.surface = "idle";
+    node.dataset.pressed = "false";
     node.style.setProperty("--pointer-x", "50%");
     node.style.setProperty("--pointer-y", "18%");
-    node.style.setProperty("--surface-rotate-x", "0deg");
-    node.style.setProperty("--surface-rotate-y", "0deg");
-    node.style.setProperty("--surface-translate-y", "0px");
   }, []);
 
   const updateFromPointer = React.useCallback(
@@ -88,17 +63,12 @@ export function useInteractiveSurface<T extends HTMLElement>({
       const pointerY = (clientY - rect.top) / rect.height;
       const clampedX = Math.min(Math.max(pointerX, 0), 1);
       const clampedY = Math.min(Math.max(pointerY, 0), 1);
-      const rotateY = (clampedX - 0.5) * 10 * strength;
-      const rotateX = (0.5 - clampedY) * 10 * strength;
 
       node.dataset.surface = "active";
       node.style.setProperty("--pointer-x", `${(clampedX * 100).toFixed(2)}%`);
       node.style.setProperty("--pointer-y", `${(clampedY * 100).toFixed(2)}%`);
-      node.style.setProperty("--surface-rotate-x", `${rotateX.toFixed(2)}deg`);
-      node.style.setProperty("--surface-rotate-y", `${rotateY.toFixed(2)}deg`);
-      node.style.setProperty("--surface-translate-y", `${(-4 * strength).toFixed(2)}px`);
     },
-    [strength]
+    []
   );
 
   React.useEffect(() => {
@@ -144,18 +114,32 @@ export function useInteractiveSurface<T extends HTMLElement>({
     reset();
   }, [disabled, reset]);
 
+  const handlePointerDown = React.useCallback(() => {
+    const node = ref.current;
+    if (!node || disabled) return;
+    node.dataset.pressed = "true";
+  }, [disabled]);
+
+  const handlePointerUp = React.useCallback(() => {
+    const node = ref.current;
+    if (!node) return;
+    node.dataset.pressed = "false";
+  }, []);
+
   return {
     ref,
     onPointerEnter: handlePointerEnter,
     onPointerMove: handlePointerMove,
     onPointerLeave: handlePointerLeave,
     onPointerCancel: handlePointerLeave,
+    onPointerDown: handlePointerDown,
+    onPointerUp: handlePointerUp,
     onBlur: handlePointerLeave,
   };
 }
 
 type GlassSurfaceProps = React.HTMLAttributes<HTMLDivElement> &
-  VariantProps<typeof glassSurfaceVariants> & {
+  GlassSurfaceVariantProps & {
     motionStrength?: number;
   };
 
@@ -170,14 +154,17 @@ export const GlassSurface = React.forwardRef<HTMLDivElement, GlassSurfaceProps>(
       onPointerMove,
       onPointerLeave,
       onPointerCancel,
+      onPointerDown,
+      onPointerUp,
       onBlur,
       ...props
     },
     forwardedRef
   ) {
+    void motionStrength;
+
     const surfaceMotion = useInteractiveSurface<HTMLDivElement>({
       disabled: !interactive,
-      strength: motionStrength,
     });
 
     return (
@@ -189,6 +176,8 @@ export const GlassSurface = React.forwardRef<HTMLDivElement, GlassSurfaceProps>(
         onPointerMove={callAll(onPointerMove, surfaceMotion.onPointerMove)}
         onPointerLeave={callAll(onPointerLeave, surfaceMotion.onPointerLeave)}
         onPointerCancel={callAll(onPointerCancel, surfaceMotion.onPointerCancel)}
+        onPointerDown={callAll(onPointerDown, surfaceMotion.onPointerDown)}
+        onPointerUp={callAll(onPointerUp, surfaceMotion.onPointerUp)}
         onBlur={callAll(onBlur, surfaceMotion.onBlur)}
         {...props}
       />

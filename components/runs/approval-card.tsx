@@ -42,7 +42,7 @@ export function ApprovalCard({
   };
 
   return (
-    <Card className="liquid-glass !rounded-[24px] !border-amber-400/20">
+    <Card className="!border-amber-300/20" interactive>
       <CardHeader>
         <CardTitle className="text-lg">Approval Required</CardTitle>
       </CardHeader>
@@ -51,7 +51,7 @@ export function ApprovalCard({
           Run <code className="font-mono">{runId}</code> has a verified patch
           ready. Approve to create the PR.
         </p>
-        <div className="grid gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+        <div className="grid gap-2 rounded-[1.25rem] border border-white/[0.08] bg-white/[0.04] p-4 text-sm">
           <div className="flex items-center justify-between gap-4">
             <span className="text-muted-foreground">Required role</span>
             <span className="font-medium capitalize">{requiredRole}</span>

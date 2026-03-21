@@ -30,7 +30,7 @@ export const roles = {
   }),
 };
 
-export type PatchPilotRole = keyof typeof roles;
+export type ReProRole = keyof typeof roles;
 
 export function isAuthConfigured() {
   return Boolean(process.env.POSTGRES_URL && process.env.BETTER_AUTH_SECRET);
@@ -141,7 +141,7 @@ export function getSessionRole(
       }
     | null
     | undefined
-): PatchPilotRole {
+): ReProRole {
   const role = session?.user?.role;
   if (role === "operator" || role === "approver" || role === "admin" || role === "viewer") {
     return role;

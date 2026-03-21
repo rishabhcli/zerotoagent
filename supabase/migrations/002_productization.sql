@@ -1,4 +1,4 @@
--- PatchPilot schema: productization
+-- RePro schema: productization
 
 -- Broaden run status support for explicit blocked outcomes.
 ALTER TABLE runs DROP CONSTRAINT IF EXISTS runs_status_check;
@@ -160,9 +160,9 @@ CREATE TABLE IF NOT EXISTS demo_users (
 
 INSERT INTO demo_users (id, email, role, display_name)
 VALUES
-  ('demo-operator', 'operator@patchpilot.local', 'operator', 'PatchPilot Operator'),
-  ('demo-approver', 'approver@patchpilot.local', 'approver', 'PatchPilot Approver'),
-  ('demo-admin', 'admin@patchpilot.local', 'admin', 'PatchPilot Admin')
+  ('demo-operator', 'operator@patchpilot.local', 'operator', 'RePro Operator'),
+  ('demo-approver', 'approver@patchpilot.local', 'approver', 'RePro Approver'),
+  ('demo-admin', 'admin@patchpilot.local', 'admin', 'RePro Admin')
 ON CONFLICT (id) DO UPDATE
 SET email = EXCLUDED.email,
     role = EXCLUDED.role,

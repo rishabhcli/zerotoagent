@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getAuthSession, getSessionRole, type PatchPilotRole } from "@/lib/auth";
+import { getAuthSession, getSessionRole, type ReProRole } from "@/lib/auth";
 
 type DemoSession = {
   user: {
     id: string;
     email?: string;
-    role: PatchPilotRole;
+    role: ReProRole;
   };
 };
 

@@ -1,9 +1,10 @@
 import { start } from "workflow/api";
 import { patchPilotIncidentToPR } from "@/workflows/patchpilot";
-import type { PatchPilotWorkflowInput } from "@/workflows/patchpilot";
+import type { ReProWorkflowInput } from "@/workflows/patchpilot";
 import { RunStartPayloadSchema } from "@/lib/patchpilot/contracts";
 import { requireRepoPolicy } from "@/lib/patchpilot/policy";
-import { createPatchPilotRunId } from "@/lib/patchpilot/run-id";
+import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
+import { createReProRunId } from "@/lib/patchpilot/run-id";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -20,6 +21,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await syncGitHubInstallationRecipes();
+  } catch (error) {
+    console.error("[api/runs/start] failed to sync GitHub repositories", error);
+  }
+
+  try {
     await requireRepoPolicy(parsed.data.repo);
   } catch (error) {
     return Response.json(
@@ -31,8 +38,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const runId = parsed.data.runId ?? createPatchPilotRunId();
-  const input: PatchPilotWorkflowInput = {
+  const runId = parsed.data.runId ?? createReProRunId();
+  const input: ReProWorkflowInput = {
     ...parsed.data,
     runId,
   };

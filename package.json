@@ -2,6 +2,21 @@
   "name": "zerotoagent",
   "version": "0.1.0",
   "private": true,
+  "description": "Verification-first incident response agent that turns multimodal evidence into tested, approval-gated pull requests with audit-grade receipts.",
+  "keywords": [
+    "agentic-devops",
+    "incident-response",
+    "software-reliability",
+    "autonomous-remediation",
+    "verification-first",
+    "human-in-the-loop",
+    "multimodal-debugging",
+    "approval-gated",
+    "observability",
+    "replayable-verification",
+    "audit-trail",
+    "hackathon"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

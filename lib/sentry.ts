@@ -2,6 +2,37 @@ import * as Sentry from "@sentry/nextjs";
 
 export { Sentry };
 
+function getSentryOrganizationSlug() {
+  return process.env.SENTRY_ORG ?? process.env.NEXT_PUBLIC_SENTRY_ORG ?? null;
+}
+
+export function buildSentryTraceUrl(traceId: string | null | undefined) {
+  const organizationSlug = getSentryOrganizationSlug();
+  if (!traceId || !organizationSlug) {
+    return null;
+  }
+
+  return `https://sentry.io/organizations/${organizationSlug}/explore/traces/?query=${encodeURIComponent(
+    traceId
+  )}`;
+}
+
+export function getRunTraceContext(
+  span:
+    | {
+        spanContext?: () => { traceId?: string };
+      }
+    | null
+    | undefined
+) {
+  const traceId = span?.spanContext?.().traceId ?? null;
+
+  return {
+    traceId,
+    sentryTraceUrl: buildSentryTraceUrl(traceId),
+  };
+}
+
 export function traceToolCall<T>(
   toolName: string,
   runId: string,

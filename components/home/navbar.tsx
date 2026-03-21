@@ -1,39 +1,56 @@
-import { Sparkles } from "lucide-react";
+import { ShieldCheck, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { GitHubSignInButton } from "@/components/home/github-sign-in-button";
+
+const navItems = [
+  { href: "#workflow", label: "Pipeline" },
+  { href: "#evidence", label: "Evidence" },
+  { href: "#features", label: "Capabilities" },
+];
 
 export function Navbar({ githubAuthEnabled }: { githubAuthEnabled: boolean }) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-6 pt-5 md:px-10 animate-fade-in-down">
-      <header className="liquid-glass-nav flex w-full max-w-5xl items-center justify-between px-6 py-3">
-        <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_12%_18%,rgba(255,255,255,0.45),rgba(255,255,255,0.05)_36%,rgba(255,255,255,0)_72%)] opacity-80" />
-        <span className="pointer-events-none absolute left-16 top-1/2 h-16 w-24 -translate-y-1/2 rounded-full bg-[conic-gradient(from_120deg_at_30%_30%,rgba(255,255,255,0.42),rgba(255,255,255,0)_68%,rgba(255,255,255,0.24),rgba(255,255,255,0))] opacity-35 blur-sm" />
-        <span className="pointer-events-none absolute right-16 top-2 h-10 w-10 rounded-full bg-gradient-to-br from-white/55 via-white/22 to-transparent opacity-85 blur-sm" />
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-full bg-primary/20">
-            <Sparkles className="size-4 text-primary" />
+    <div className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-8">
+      <GlassSurface
+        variant="nav"
+        motionStrength={0.45}
+        className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-5"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-full bg-white/[0.08] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
+            <Sparkles className="size-4" />
           </div>
-          <span className="text-lg font-semibold tracking-tight">
-            PatchPilot
-          </span>
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold tracking-tight text-foreground">
+              RePro
+            </p>
+            <p className="truncate text-[0.68rem] uppercase tracking-[0.28em] text-muted-foreground">
+              Incident to PR
+            </p>
+          </div>
         </div>
 
-        <nav className="hidden items-center gap-6 md:flex">
-          <a
-            href="#workflow"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            How it works
-          </a>
-          <a
-            href="#features"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Features
-          </a>
+        <nav className="hidden items-center gap-1 lg:flex">
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {item.label}
+            </a>
+          ))}
         </nav>
 
-        <GitHubSignInButton enabled={githubAuthEnabled} />
-      </header>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="hidden md:inline-flex">
+            <ShieldCheck className="size-3" />
+            approval gated
+          </Badge>
+          <GitHubSignInButton enabled={githubAuthEnabled} />
+        </div>
+      </GlassSurface>
     </div>
   );
 }

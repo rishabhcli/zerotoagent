@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import {
   Card,
   CardContent,
@@ -32,7 +33,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createPatchPilotRunId } from "@/lib/patchpilot/run-id";
+import { createReProRunId } from "@/lib/patchpilot/run-id";
 import { cn } from "@/lib/utils";
 import { AudioCapture } from "@/lib/voice/audio-capture";
 import { RealtimeSTTClient } from "@/lib/voice/stt-client";
@@ -208,7 +209,7 @@ export function VoiceIntake({
     setState("sending");
 
     try {
-      const runId = createPatchPilotRunId();
+      const runId = createReProRunId();
       const response = await fetch("/api/runs/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -265,12 +266,12 @@ export function VoiceIntake({
   if (repos.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
-        <Card className="w-full max-w-xl liquid-glass !rounded-[32px] border-0">
+        <Card className="w-full max-w-xl" interactive>
           <CardHeader>
             <Badge variant="outline" className="w-fit border-primary/20 bg-primary/5 text-primary">
               Voice Mode
             </Badge>
-            <CardTitle className="text-3xl">Call PatchPilot</CardTitle>
+            <CardTitle className="text-3xl">Call RePro</CardTitle>
             <CardDescription className="text-base">
               Voice intake needs at least one allowlisted repo before it can start a run.
             </CardDescription>
@@ -290,7 +291,7 @@ export function VoiceIntake({
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
-      <Card className="w-full max-w-5xl liquid-glass !rounded-[32px] border-0">
+      <Card className="w-full max-w-5xl" interactive>
         <CardHeader className="space-y-5">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
@@ -302,10 +303,10 @@ export function VoiceIntake({
               </Badge>
               <div className="space-y-2">
                 <CardTitle className="text-3xl sm:text-4xl">
-                  Call PatchPilot
+                  Call RePro
                 </CardTitle>
                 <CardDescription className="max-w-2xl text-base leading-7">
-                  Describe the incident out loud. PatchPilot uses the transcript as the
+                  Describe the incident out loud. RePro uses the transcript as the
                   run brief, verifies it against the selected repo, and takes you
                   straight into the trace.
                 </CardDescription>
@@ -313,7 +314,11 @@ export function VoiceIntake({
             </div>
 
             {selectedRepo ? (
-              <div className="min-w-[240px] rounded-[28px] border border-border/60 bg-background/40 p-5">
+              <GlassSurface
+                variant="quiet-panel"
+                motionStrength={0.2}
+                className="min-w-[240px] p-5"
+              >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Active Target
                 </p>
@@ -323,7 +328,7 @@ export function VoiceIntake({
                 <p className="mt-1 text-sm text-muted-foreground">
                   Branch {effectiveBranch} · {environment}
                 </p>
-              </div>
+              </GlassSurface>
             ) : null}
           </div>
         </CardHeader>
@@ -361,7 +366,11 @@ export function VoiceIntake({
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-            <section className="rounded-[30px] border border-border/60 bg-background/30 p-6">
+            <GlassSurface
+              variant="quiet-panel"
+              motionStrength={0.22}
+              className="p-6"
+            >
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="rounded-full border border-primary/20 bg-primary/5 p-4 shadow-[0_0_60px_rgba(var(--primary),0.16)]">
                   <Button
@@ -401,7 +410,7 @@ export function VoiceIntake({
                       : state === "review"
                         ? "No extra title or summary needed. Launch the run or record a cleaner take."
                         : state === "sending"
-                          ? "PatchPilot is turning the transcript into an incident run and opening the trace."
+                          ? "RePro is turning the transcript into an incident run and opening the trace."
                           : "Voice mode is now record-first. Choose the repo once, then speak naturally."}
                   </p>
                 </div>
@@ -424,9 +433,13 @@ export function VoiceIntake({
                   </div>
                 ) : null}
               </div>
-            </section>
+            </GlassSurface>
 
-            <section className="rounded-[30px] border border-border/60 bg-background/30 p-6">
+            <GlassSurface
+              variant="quiet-panel"
+              motionStrength={0.22}
+              className="p-6"
+            >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">Live transcript</p>
@@ -441,7 +454,7 @@ export function VoiceIntake({
 
               <div
                 aria-live="polite"
-                className="mt-4 min-h-[260px] rounded-[24px] border border-border/60 bg-background/50 p-5"
+                className="mt-4 min-h-[260px] rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-5"
               >
                 {fullTranscript ? (
                   <p className="text-[15px] leading-7 text-foreground">
@@ -455,25 +468,25 @@ export function VoiceIntake({
                   </p>
                 ) : (
                   <p className="text-sm leading-7 text-muted-foreground">
-                    Start recording and PatchPilot will capture the incident here. You
+                    Start recording and RePro will capture the incident here. You
                     do not need to prefill a title, repo owner, repo name, or a second
                     summary before using voice mode.
                   </p>
                 )}
               </div>
 
-              <div className="mt-4 rounded-[24px] border border-border/60 bg-background/40 p-4">
+              <div className="mt-4 rounded-[24px] border border-white/[0.08] bg-white/[0.04] p-4">
                 <p className="text-sm font-medium">What happens next</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  PatchPilot verifies against {selectedRepo ? getRepoLabel(selectedRepo) : "the selected repo"}
+                  RePro verifies against {selectedRepo ? getRepoLabel(selectedRepo) : "the selected repo"}
                   , uses {effectiveBranch} as the branch target, and opens the full run
                   trace as soon as the workflow starts.
                 </p>
               </div>
-            </section>
+            </GlassSurface>
           </div>
 
-          <Accordion className="rounded-[24px] border border-border/60 bg-background/20 px-4">
+          <Accordion className="rounded-[24px] border border-white/[0.08] bg-white/[0.04] px-4">
             <AccordionItem value="advanced" className="border-none">
               <AccordionTrigger className="py-4 hover:no-underline">
                 Advanced target options
@@ -485,7 +498,7 @@ export function VoiceIntake({
                     <input
                       value={environment}
                       onChange={(event) => setEnvironment(event.target.value)}
-                      className="rounded-2xl border border-border bg-background px-4 py-3 outline-none transition focus:border-primary"
+                      className="glass-input px-4 py-3"
                       placeholder="staging"
                     />
                   </label>
@@ -495,7 +508,7 @@ export function VoiceIntake({
                     <input
                       value={branchOverride}
                       onChange={(event) => setBranchOverride(event.target.value)}
-                      className="rounded-2xl border border-border bg-background px-4 py-3 outline-none transition focus:border-primary"
+                      className="glass-input px-4 py-3"
                       placeholder={selectedRepo?.defaultBranch ?? "main"}
                     />
                   </label>

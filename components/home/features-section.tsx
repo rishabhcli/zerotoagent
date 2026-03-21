@@ -1,85 +1,105 @@
 import {
-  Lock,
-  Zap,
+  AudioLines,
   Eye,
-  GitBranch,
+  Lock,
   Shield,
-  Clock,
+  Sparkles,
+  Zap,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { cn } from "@/lib/utils";
 
 const features = [
   {
-    icon: Zap,
-    title: "Instant triage",
+    icon: Eye,
+    title: "Evidence, not vibes",
     description:
-      "AI parses stack traces, logs, and issue context to pinpoint root cause in seconds.",
+      "Artifacts, diff, approval state, and CI stay in one trace.",
+    detail: "run events • artifacts • receipts",
+    className: "lg:col-span-2 lg:row-span-2",
+    variant: "hero-panel" as const,
   },
   {
     icon: Lock,
     title: "Sandboxed execution",
-    description:
-      "Every reproduction and fix runs in an isolated environment. Your infra stays untouched.",
-  },
-  {
-    icon: Eye,
-    title: "Full observability",
-    description:
-      "Every step emits structured events. Inspect the full trace from diagnosis to PR.",
+    description: "Reproduce and verify before any PR exists.",
+    detail: "sandbox.created",
+    className: "",
+    variant: "card" as const,
   },
   {
     icon: Shield,
-    title: "Approval-gated",
-    description:
-      "No PR is opened without your explicit sign-off. You stay in control.",
+    title: "Repo-scoped policy",
+    description: "Allowed repos, domains, and commands stay visible.",
+    detail: "repo.policy_resolved",
+    className: "",
+    variant: "quiet-panel" as const,
   },
   {
-    icon: GitBranch,
-    title: "Repo-scoped policies",
-    description:
-      "Define which repositories PatchPilot can operate on with fine-grained access rules.",
+    icon: AudioLines,
+    title: "Voice to trace handoff",
+    description: "Voice intake lands in the same run model.",
+    detail: "voice • web trace",
+    className: "lg:col-span-2",
+    variant: "card" as const,
   },
   {
-    icon: Clock,
-    title: "Median fix time: 4 min",
-    description:
-      "From incident to verified patch in minutes, not hours. Ship fixes while you sleep.",
+    icon: Zap,
+    title: "Fast when it’s obvious",
+    description: "Clear incidents move in minutes.",
+    detail: "median 4 min",
+    className: "",
+    variant: "quiet-panel" as const,
+  },
+  {
+    icon: Sparkles,
+    title: "Human approval before output",
+    description: "Automation works. People release the code.",
+    detail: "approval.requested",
+    className: "",
+    variant: "quiet-panel" as const,
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section className="relative z-10 mx-auto w-full max-w-6xl px-6 py-24 md:py-32">
-      <div className="mb-16 text-center animate-fade-in-up">
-        <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary">
-          Why PatchPilot
-        </p>
-        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-          Built for production teams
+    <section id="features" className="home-section">
+      <div className="mb-12 max-w-3xl space-y-4">
+        <p className="section-kicker">Capabilities</p>
+        <h2 className="display-section text-foreground">
+          Calm surfaces. Clear proof.
         </h2>
+        <p className="body-lead max-w-2xl">
+          The landing page and app shell now share one material language.
+        </p>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((f, i) => {
-          const Icon = f.icon;
-          return (
-            <div
-              key={f.title}
-              className="group relative overflow-hidden rounded-3xl liquid-glass p-7 transition-all duration-300 hover:bg-white/[0.12] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] animate-fade-in-up"
-              style={{ animationDelay: `${0.1 + i * 0.08}s` }}
-            >
-              {/* Hover glow */}
-              <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-primary/10 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="grid gap-4 lg:grid-cols-4">
+        {features.map((feature) => {
+          const Icon = feature.icon;
 
-              <div className="relative">
-                <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-white/[0.08] transition-colors group-hover:bg-primary/20">
-                  <Icon className="size-5 text-primary" />
+          return (
+            <GlassSurface
+              key={feature.title}
+              variant={feature.variant}
+              motionStrength={feature.variant === "hero-panel" ? 0.95 : 0.68}
+              className={cn("p-5 md:p-6", feature.className)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex size-12 items-center justify-center rounded-[1.15rem] bg-white/[0.08] text-primary">
+                  <Icon className="size-5" />
                 </div>
-                <h3 className="mb-2 text-base font-semibold">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {f.description}
-                </p>
+                <Badge variant="outline">{feature.detail}</Badge>
               </div>
-            </div>
+
+              <h3 className="mt-5 text-2xl font-semibold tracking-tight text-foreground">
+                {feature.title}
+              </h3>
+              <p className="mt-3 max-w-[34rem] text-sm leading-6 text-muted-foreground">
+                {feature.description}
+              </p>
+            </GlassSurface>
           );
         })}
       </div>

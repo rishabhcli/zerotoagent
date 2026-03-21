@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createPatchPilotRunId } from "@/lib/patchpilot/run-id";
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { createReProRunId } from "@/lib/patchpilot/run-id";
 
 interface RepoOption {
   id: string;
@@ -57,7 +58,7 @@ export function NewRunForm({
     setError(null);
 
     try {
-      const runId = createPatchPilotRunId();
+      const runId = createReProRunId();
       const artifacts: Array<{
         kind: "log" | "screenshot" | "pdf" | "audio" | "other";
         filename: string;
@@ -155,92 +156,144 @@ export function NewRunForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 rounded-3xl border border-border/60 bg-card/50 p-6 shadow-2xl">
-      <div className="grid gap-2">
-        <label className="text-sm font-medium" htmlFor="incident-summary">
-          Incident summary
-        </label>
-        <textarea
-          id="incident-summary"
-          value={summaryText}
-          onChange={(event) => setSummaryText(event.target.value)}
-          rows={6}
-          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-          placeholder="Describe the incident, attach any evidence, and tell PatchPilot what environment to validate against."
-        />
-      </div>
+    <GlassSurface
+      variant="hero-panel"
+      motionStrength={0.35}
+      className="p-6 md:p-8"
+    >
+      <form onSubmit={handleSubmit} className="grid gap-6">
+        <GlassSurface
+          variant="quiet-panel"
+          motionStrength={0.24}
+          className="p-5"
+        >
+          <div className="grid gap-2">
+            <label className="text-sm font-medium" htmlFor="incident-summary">
+              Incident summary
+            </label>
+            <textarea
+              id="incident-summary"
+              value={summaryText}
+              onChange={(event) => setSummaryText(event.target.value)}
+              rows={7}
+              className="glass-input w-full px-4 py-3 text-sm"
+              placeholder="Describe the incident, attach any evidence, and tell RePro what environment to validate against."
+            />
+          </div>
+        </GlassSurface>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <label className="grid gap-2 text-sm">
-          <span className="font-medium">Repo scope</span>
-          <select
-            value={repoId}
-            onChange={(event) => setRepoId(event.target.value)}
-            className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
+        <div className="grid gap-4 md:grid-cols-3">
+          <GlassSurface
+            variant="quiet-panel"
+            motionStrength={0.22}
+            className="p-4"
           >
-            {repos.map((repo) => (
-              <option key={repo.id} value={repo.id}>
-                {repo.owner}/{repo.name} ({repo.defaultBranch})
-              </option>
-            ))}
-          </select>
-        </label>
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Repo scope</span>
+              <select
+                value={repoId}
+                onChange={(event) => setRepoId(event.target.value)}
+                className="glass-input px-3 py-2"
+              >
+                {repos.map((repo) => (
+                  <option key={repo.id} value={repo.id}>
+                    {repo.owner}/{repo.name} ({repo.defaultBranch})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </GlassSurface>
 
-        <label className="grid gap-2 text-sm">
-          <span className="font-medium">Mode</span>
-          <select
-            value={mode}
-            onChange={(event) => setMode(event.target.value as "dry_run" | "apply_verify")}
-            className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
+          <GlassSurface
+            variant="quiet-panel"
+            motionStrength={0.22}
+            className="p-4"
           >
-            <option value="apply_verify">Apply + Verify</option>
-            <option value="dry_run">Dry Run</option>
-          </select>
-        </label>
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Mode</span>
+              <select
+                value={mode}
+                onChange={(event) =>
+                  setMode(event.target.value as "dry_run" | "apply_verify")
+                }
+                className="glass-input px-3 py-2"
+              >
+                <option value="apply_verify">Apply + Verify</option>
+                <option value="dry_run">Dry Run</option>
+              </select>
+            </label>
+          </GlassSurface>
 
-        <label className="grid gap-2 text-sm">
-          <span className="font-medium">Environment</span>
-          <input
-            value={environment}
-            onChange={(event) => setEnvironment(event.target.value)}
-            className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
-            placeholder="staging"
-          />
-        </label>
-      </div>
-
-      <label className="grid gap-2 text-sm">
-        <span className="font-medium">Evidence uploads</span>
-        <input
-          type="file"
-          multiple
-          onChange={(event) => setFiles(event.target.files)}
-          className="rounded-xl border border-dashed border-border bg-background px-3 py-3 text-sm"
-        />
-        <span className="text-muted-foreground">
-          Supported for v1: screenshots, logs, PDFs, and audio notes.
-        </span>
-      </label>
-
-      {selectedRepo ? (
-        <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">Policy preview</p>
-          <p className="mt-1">
-            PatchPilot will operate only inside the allowlisted repo and open a PR only after sandbox verification and approver confirmation.
-          </p>
+          <GlassSurface
+            variant="quiet-panel"
+            motionStrength={0.22}
+            className="p-4"
+          >
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Environment</span>
+              <input
+                value={environment}
+                onChange={(event) => setEnvironment(event.target.value)}
+                className="glass-input px-3 py-2"
+                placeholder="staging"
+              />
+            </label>
+          </GlassSurface>
         </div>
-      ) : null}
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        <GlassSurface
+          variant="quiet-panel"
+          motionStrength={0.22}
+          className="p-5"
+        >
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium">Evidence uploads</span>
+            <input
+              type="file"
+              multiple
+              onChange={(event) => setFiles(event.target.files)}
+              className="glass-input rounded-[1.2rem] border-dashed px-3 py-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-white/[0.08] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+            />
+            <span className="text-muted-foreground">
+              Supported for v1: screenshots, logs, PDFs, and audio notes.
+            </span>
+          </label>
+        </GlassSurface>
 
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          Status: {status === "idle" ? "Ready" : status === "uploading" ? "Uploading evidence" : "Starting workflow"}
-        </p>
-        <Button type="submit" disabled={status !== "idle"}>
-          {status === "idle" ? "Start Verified Fix Run" : "Working..."}
-        </Button>
-      </div>
-    </form>
+        {selectedRepo ? (
+          <GlassSurface
+            variant="quiet-panel"
+            motionStrength={0.2}
+            className="p-4 text-sm text-muted-foreground"
+          >
+            <p className="font-medium text-foreground">Policy preview</p>
+            <p className="mt-1 leading-6">
+              RePro will operate only inside the allowlisted repo and open
+              a PR only after sandbox verification and approver confirmation.
+            </p>
+          </GlassSurface>
+        ) : null}
+
+        {error ? (
+          <div className="rounded-[1.25rem] border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            Status:{" "}
+            {status === "idle"
+              ? "Ready"
+              : status === "uploading"
+                ? "Uploading evidence"
+                : "Starting workflow"}
+          </p>
+          <Button type="submit" size="lg" disabled={status !== "idle"}>
+            {status === "idle" ? "Start verified run" : "Working..."}
+          </Button>
+        </div>
+      </form>
+    </GlassSurface>
   );
 }

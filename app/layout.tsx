@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PatchPilot",
+  title: "RePro",
   description: "Incident-to-PR verified fix agent with approval-gated execution",
 };
 
@@ -29,6 +29,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${outfit.variable} ${geistMono.variable} dark`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body className="relative min-h-screen overflow-x-hidden bg-background font-sans antialiased selection:bg-primary/30 selection:text-primary">

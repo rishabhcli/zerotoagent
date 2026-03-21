@@ -14,12 +14,16 @@ export function isGitHubAppConfigured() {
 }
 
 function getApp() {
-  if (!isGitHubAppConfigured()) {
+  const appId = process.env.GITHUB_APP_ID;
+  const privateKey = process.env.GITHUB_PRIVATE_KEY;
+
+  if (!appId || !privateKey) {
     throw new Error("GITHUB_APP_ID and GITHUB_PRIVATE_KEY are required");
   }
+
   return new App({
-    appId: process.env.GITHUB_APP_ID,
-    privateKey: process.env.GITHUB_PRIVATE_KEY,
+    appId,
+    privateKey,
   });
 }
 

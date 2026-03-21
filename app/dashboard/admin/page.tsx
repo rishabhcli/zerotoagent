@@ -8,8 +8,10 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { RunStatusBadge } from "@/components/runs/run-status-badge";
 import { requireAdmin } from "@/lib/auth-guard";
+import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
 
 interface RunRow {
   id: string;
@@ -46,8 +48,30 @@ interface RecipeRow {
 }
 
 async function getData() {
+  let syncedRepositories: string[] = [];
+  let syncedRepoCount: number | null = null;
+  let installationCount: number | null = null;
+
+  try {
+    const syncSummary = await syncGitHubInstallationRecipes();
+    if (syncSummary.synced) {
+      syncedRepositories = syncSummary.repositories;
+      syncedRepoCount = syncSummary.discoveredRepoCount;
+      installationCount = syncSummary.installationCount;
+    }
+  } catch (error) {
+    console.error("[dashboard/admin] failed to sync GitHub repositories", error);
+  }
+
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return { runs: [], approvals: [], recipes: [] };
+    return {
+      runs: [],
+      approvals: [],
+      recipes: [],
+      syncedRepositories,
+      syncedRepoCount,
+      installationCount,
+    };
   }
 
   const { createClient } = await import("@supabase/supabase-js");
@@ -67,12 +91,20 @@ async function getData() {
     runs: (runsRes.data as RunRow[]) ?? [],
     approvals: (approvalsRes.data as ApprovalRow[]) ?? [],
     recipes: (recipesRes.data as RecipeRow[]) ?? [],
+    syncedRepositories,
+    syncedRepoCount,
+    installationCount,
   };
 }
 
 export default async function AdminPage() {
   await requireAdmin();
-  const { runs, approvals, recipes } = await getData();
+  const { runs, approvals, recipes, syncedRepositories, syncedRepoCount, installationCount } =
+    await getData();
+  const syncedRepositorySet = new Set(syncedRepositories);
+  const stalePolicyCount = recipes.filter(
+    (recipe) => !syncedRepositorySet.has(`${recipe.repo_owner}/${recipe.repo_name}`)
+  ).length;
   const correlations = runs.reduce<Array<{ key: string; count: number; repo: string }>>((acc, run) => {
     const key = run.error_signature ?? `${run.repo_owner}/${run.repo_name}`;
     const existing = acc.find((item) => item.key === key);
@@ -90,12 +122,38 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-muted-foreground">
-          Audit console — run history and approval log
+      <GlassSurface
+        variant="hero-panel"
+        motionStrength={0.24}
+        className="p-8 md:p-10"
+      >
+        <p className="section-kicker">Admin console</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground">
+          Audit history, approvals, and repo policies.
+        </h1>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
+          Same calmer operator material system, denser data surfaces, and
+          approval history when you need to inspect the control plane.
         </p>
-      </div>
+      </GlassSurface>
+
+      {syncedRepoCount != null ? (
+        <Card interactive>
+          <CardContent className="flex flex-wrap items-center gap-6 py-5 text-sm text-muted-foreground">
+            <span>
+              GitHub App inventory: <span className="font-medium text-foreground">{syncedRepoCount}</span>{" "}
+              repositories
+            </span>
+            <span>
+              Installations: <span className="font-medium text-foreground">{installationCount ?? 0}</span>
+            </span>
+            <span>
+              Policies outside installation access:{" "}
+              <span className="font-medium text-foreground">{stalePolicyCount}</span>
+            </span>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Tabs defaultValue="runs">
         <TabsList>
@@ -202,6 +260,7 @@ export default async function AdminPage() {
                 <TableRow>
                   <TableHead>Repo</TableHead>
                   <TableHead>Enabled</TableHead>
+                  <TableHead>Installation Access</TableHead>
                   <TableHead>GitHub App</TableHead>
                   <TableHead>CI Workflow</TableHead>
                   <TableHead>Allowed Domains</TableHead>
@@ -212,6 +271,13 @@ export default async function AdminPage() {
                   <TableRow key={recipe.id}>
                     <TableCell>{recipe.repo_owner}/{recipe.repo_name}</TableCell>
                     <TableCell>{recipe.enabled ? "true" : "false"}</TableCell>
+                    <TableCell>
+                      {syncedRepositorySet.size === 0
+                        ? "unknown"
+                        : syncedRepositorySet.has(`${recipe.repo_owner}/${recipe.repo_name}`)
+                          ? "installed"
+                          : "missing"}
+                    </TableCell>
                     <TableCell>{recipe.installation_id ?? "—"}</TableCell>
                     <TableCell>{recipe.ci_workflow_name ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">

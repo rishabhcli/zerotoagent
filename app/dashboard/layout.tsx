@@ -5,13 +5,16 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import {
   Activity,
-  Plus,
   BookOpen,
-  Shield,
-  Mic,
   LogOut,
+  Mic,
+  Plus,
+  Shield,
   Sparkles,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   href: string;
@@ -27,6 +30,14 @@ const navItems: NavItem[] = [
   { href: "/voice", label: "Voice", icon: Mic },
 ];
 
+function isNavItemActive(pathname: string, href: string) {
+  if (href === "/dashboard") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function SidebarNavItem({
   href,
   label,
@@ -36,14 +47,35 @@ function SidebarNavItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-4 py-3 rounded-[16px] transition-all duration-200 group ${
-        isActive
-          ? "liquid-glass-active text-foreground"
-          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-      }`}
+      prefetch={false}
+      className="block focus:outline-none"
     >
-      <Icon className={`w-5 h-5 ${isActive ? "text-primary" : ""}`} />
-      <span className="font-medium text-sm">{label}</span>
+      <GlassSurface
+        variant={isActive ? "pill" : "quiet-panel"}
+        motionStrength={0.4}
+        className="px-3 py-2.5"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "flex size-9 items-center justify-center rounded-full border border-white/[0.08]",
+              isActive
+                ? "bg-white/[0.1] text-primary"
+                : "bg-white/[0.04] text-muted-foreground"
+            )}
+          >
+            <Icon className="size-4" />
+          </div>
+          <p
+            className={cn(
+              "text-sm font-medium",
+              isActive ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {label}
+          </p>
+        </div>
+      </GlassSurface>
     </Link>
   );
 }
@@ -60,56 +92,94 @@ function UserSection({
   role: string;
 }) {
   return (
-    <div className="mt-auto pt-6 border-t border-white/[0.08]">
-      <div className="flex items-center gap-3 px-2 mb-4">
+    <GlassSurface variant="quiet-panel" motionStrength={0.32} className="p-4">
+      <div className="flex items-center gap-3">
         {image ? (
           <img
             src={image}
             alt={name}
-            className="w-10 h-10 rounded-full border border-white/[0.1]"
+            className="size-11 rounded-full border border-white/[0.12]"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-primary/20 border border-white/[0.1] flex items-center justify-center text-sm font-bold text-primary">
+          <div className="flex size-11 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.08] text-sm font-semibold text-primary">
             {name[0]?.toUpperCase()}
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{name}</p>
-          <p className="text-xs text-muted-foreground capitalize">{role}</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-foreground">{name}</p>
+          <p className="truncate text-xs text-muted-foreground">{email}</p>
         </div>
       </div>
-      <button
-        onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/"; } } })}
-        className="flex w-full items-center gap-3 px-4 py-2.5 rounded-[14px] text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all"
+
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-[1rem] border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>role</span>
+        <span className="font-medium text-foreground">{role}</span>
+      </div>
+
+      <Button
+        variant="ghost"
+        className="mt-4 w-full justify-start"
+        onClick={() =>
+          signOut({
+            fetchOptions: {
+              onSuccess: () => {
+                window.location.href = "/";
+              },
+            },
+          })
+        }
       >
-        <LogOut className="w-4 h-4" />
+        <LogOut className="size-4" />
         Sign out
-      </button>
-    </div>
+      </Button>
+    </GlassSurface>
   );
 }
 
 function MobileTabBar({ pathname }: { pathname: string }) {
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <div className="liquid-glass px-2 py-2 flex items-center gap-1">
-        {navItems.map(({ href, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+    <div className="fixed inset-x-0 bottom-4 z-40 px-4 md:hidden">
+      <GlassSurface
+        variant="nav"
+        motionStrength={0.35}
+        className="mx-auto flex max-w-sm items-center justify-between gap-2 px-2 py-2"
+      >
+        {navItems.map(({ href, icon: Icon, label }) => {
+          const isActive = isNavItemActive(pathname, href);
+
           return (
             <Link
               key={href}
               href={href}
-              className={`p-3 rounded-[14px] transition-all ${
-                isActive
-                  ? "liquid-glass-active"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              prefetch={false}
+              className="block focus:outline-none"
             >
-              <Icon className={`w-5 h-5 ${isActive ? "text-primary" : ""}`} />
+              <GlassSurface
+                variant={isActive ? "pill" : "quiet-panel"}
+                motionStrength={0.28}
+                className="px-2 py-2"
+              >
+                <div className="flex items-center gap-2 px-1">
+                  <Icon
+                    className={cn(
+                      "size-4",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-xs font-medium",
+                      isActive ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {label}
+                  </span>
+                </div>
+              </GlassSurface>
             </Link>
           );
         })}
-      </div>
+      </GlassSurface>
     </div>
   );
 }
@@ -121,7 +191,6 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
-  // Mock user for now - in production this would come from props or context
   const user = {
     name: "User",
     email: "user@example.com",
@@ -129,51 +198,44 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-[260px] liquid-glass rounded-r-[24px] flex-col z-50">
-        {/* Logo */}
-        <div className="p-6 pb-4">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-[14px] bg-primary/20 border border-white/[0.1]">
-              <Sparkles className="size-5 text-primary" />
+    <div className="page-shell">
+      <aside className="fixed left-4 top-4 z-40 hidden h-[calc(100vh-2rem)] w-[284px] md:block">
+        <GlassSurface
+          variant="hero-panel"
+          motionStrength={0.4}
+          className="flex h-full flex-col p-4"
+        >
+          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
+            <div className="flex size-12 items-center justify-center rounded-[1.25rem] bg-white/[0.08] text-primary">
+              <Sparkles className="size-5" />
             </div>
             <div>
-              <span className="font-bold text-lg tracking-tight text-gradient">
-                PatchPilot
-              </span>
-              <span className="block text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                ALPHA
-              </span>
+              <p className="text-lg font-semibold tracking-tight text-foreground">
+                RePro
+              </p>
             </div>
-          </Link>
-        </div>
+          </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-4 space-y-1">
-          {navItems.map((item) => (
-            <SidebarNavItem
-              key={item.href}
-              {...item}
-              isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)}
-            />
-          ))}
-        </nav>
+          <div className="mt-5 space-y-2">
+            {navItems.map((item) => (
+              <SidebarNavItem
+                key={item.href}
+                {...item}
+                isActive={isNavItemActive(pathname, item.href)}
+              />
+            ))}
+          </div>
 
-        {/* User Section */}
-        <div className="p-4">
-          <UserSection {...user} />
-        </div>
+          <div className="mt-auto pt-4">
+            <UserSection {...user} />
+          </div>
+        </GlassSurface>
       </aside>
 
-      {/* Mobile Tab Bar */}
       <MobileTabBar pathname={pathname} />
 
-      {/* Main Content */}
-      <main className="flex-1 md:ml-[260px] min-h-screen">
-        <div className="container max-w-screen-2xl py-6 px-4 md:px-6 pb-24 md:pb-6">
-          {children}
-        </div>
+      <main className="min-h-screen pb-28 md:pl-[316px] md:pb-8">
+        <div className="content-shell pt-4 md:pt-6">{children}</div>
       </main>
     </div>
   );
