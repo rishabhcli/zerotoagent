@@ -77,13 +77,27 @@ function buildMessage(
   event: { type: RunEventType; data?: Record<string, unknown> }
 ) {
   const { type, data } = event;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const traceUrl = `${appUrl}/runs/${runId}`;
+  const approvalUrl = `${traceUrl}#approval-console`;
+  const receiptUrl = `${appUrl}/api/runs/${runId}/receipts`;
 
   switch (type) {
     case "incident.parsed":
       return stepProgressCard({
         runId,
         stepName: "Evidence Extracted",
-        description: `Root cause: ${(data?.suspectedRootCause as string) ?? "analyzing..."}`,
+        description:
+          (data?.suspectedRootCause as string) ??
+          (data?.normalizedSummary as string) ??
+          "Evidence parsed and triage updated.",
+      });
+
+    case "repo.policy_resolved":
+      return stepProgressCard({
+        runId,
+        stepName: "Policy Resolved",
+        description: `Repo allowlist and sandbox policy loaded successfully.`,
       });
 
     case "repo.focus":
@@ -93,21 +107,54 @@ function buildMessage(
         description: `Found ${((data?.candidates as unknown[]) ?? []).length} suspect files`,
       });
 
-    case "verification.done": {
-      const tests = data?.tests as { status?: string } | undefined;
+    case "reproduction.completed":
+      return stepProgressCard({
+        runId,
+        stepName: "Reproduction Attempt",
+        description:
+          data?.reproduced === true
+            ? "Issue reproduced in the sandbox."
+            : "Issue was not reproducible in the sandbox.",
+      });
+
+    case "verification.completed": {
+      const status = data?.status as string | undefined;
       return stepProgressCard({
         runId,
         stepName: "Verification Complete",
-        description: `Tests ${tests?.status === "pass" ? "passed" : "failed"}`,
+        description:
+          status === "pass"
+            ? "Sandbox verification passed."
+            : status === "flaky"
+              ? "Verification was flaky across retries."
+              : "Sandbox verification failed.",
       });
     }
 
     case "approval.requested":
       return approvalRequestCard({
         runId,
-        prTitle: `Fix for run ${runId}`,
-        diffstat: (data?.diffstat as string) ?? "pending",
-        testSummary: "All tests passed",
+        prTitle: `Open PR for run ${runId}`,
+        patchSummary:
+          (data?.patchSummary as string) ?? "Verified patch is ready for approval.",
+        diffstat: typeof data?.diffstat === "string" ? (data.diffstat as string) : undefined,
+        testSummary:
+          typeof data?.tests === "object" && data?.tests !== null
+            ? `${((data.tests as { attempts?: unknown[] }).attempts ?? []).length || 1} verification run(s) completed`
+            : "Sandbox verification passed",
+        requiredRole: "Approver",
+        approvalUrl,
+        traceUrl,
+      });
+
+    case "approval.resolved":
+      return stepProgressCard({
+        runId,
+        stepName: "Approval",
+        description:
+          data?.approved === true
+            ? "An approver authorized PR creation."
+            : "PR creation was rejected and the run stopped safely.",
       });
 
     case "pr.created":
@@ -115,13 +162,42 @@ function buildMessage(
         runId,
         prUrl: (data?.prUrl as string) ?? "#",
         prNumber: (data?.prNumber as number) ?? 0,
-        summary: "Verified fix applied",
+        summary: "Verified fix applied and PR opened.",
+        receiptUrl,
+        traceUrl,
+      });
+
+    case "ci.completed":
+      return stepProgressCard({
+        runId,
+        stepName: "CI Status",
+        description: (data?.summary as string) ?? "CI status updated.",
+      });
+
+    case "receipts.created":
+      return stepProgressCard({
+        runId,
+        stepName: "Receipts Ready",
+        description: "Receipt bundle is available for download from the run trace.",
+      });
+
+    case "run.completed":
+      return finalReceiptCard({
+        runId,
+        prUrl: (data?.prUrl as string) ?? undefined,
+        summary: "Run completed with full receipts and audit trail.",
+        receiptUrl,
+        traceUrl,
       });
 
     case "run.failed":
       return runFailedCard({
         runId,
         reason: (data?.error as string) ?? (data?.reason as string) ?? "Unknown error",
+        remediation: Array.isArray(data?.remediation)
+          ? (data?.remediation as string[])
+          : undefined,
+        traceUrl,
       });
 
     default:

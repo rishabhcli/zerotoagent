@@ -2,7 +2,6 @@ import { Chat } from "chat";
 import { createSlackAdapter } from "@chat-adapter/slack";
 import { createGitHubAdapter } from "@chat-adapter/github";
 import { createPostgresState } from "@chat-adapter/state-pg";
-import { nanoid } from "nanoid";
 import {
   runStartedCard,
 } from "@/lib/receipts/slack";
@@ -13,6 +12,35 @@ interface ThreadState {
   status?: "idle" | "running" | "awaiting_approval" | "done" | "failed";
   repo?: string;
   incidentSummary?: string;
+}
+
+function extractRepoHint(text: string) {
+  const repoMatch =
+    text.match(/repo\s*:\s*([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)(?:\s*\(([^)]+)\))?/i) ??
+    text.match(/\b([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\b/);
+
+  if (repoMatch) {
+    return {
+      owner: repoMatch[1],
+      name: repoMatch[2],
+      defaultBranch: repoMatch[3] ?? "main",
+    };
+  }
+
+  const simpleMatch = text.match(/repo\s*:\s*([A-Za-z0-9_.-]+)(?:\s*\(([^)]+)\))?/i);
+  if (simpleMatch) {
+    return {
+      owner: process.env.PATCHPILOT_DEFAULT_REPO_OWNER ?? "demo",
+      name: simpleMatch[1],
+      defaultBranch: simpleMatch[2] ?? "main",
+    };
+  }
+
+  return {
+    owner: process.env.PATCHPILOT_DEFAULT_REPO_OWNER ?? "demo",
+    name: process.env.PATCHPILOT_DEFAULT_REPO_NAME ?? "shop-api",
+    defaultBranch: process.env.PATCHPILOT_DEFAULT_REPO_BRANCH ?? "main",
+  };
 }
 
 // Lazy initialization to avoid adapter validation errors during build.
@@ -49,13 +77,23 @@ function registerHandlers(bot: Chat) {
   bot.onNewMention(async (thread, message) => {
     const text = message.text;
     console.log(`[bot] new mention from ${message.author.userName}: ${text.slice(0, 100)}`);
+    const repo = extractRepoHint(text);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
     // Post acknowledgement
     const ack = await thread.post(
       runStartedCard({
-        runId: "...",
-        repo: "detecting...",
+        runId: "pending",
+        repo: `${repo.owner}/${repo.name}`,
         summary: text.slice(0, 200),
+        mode: "apply verify",
+        environment: "staging",
+        nextSteps: [
+          "Extract key signals from the incident evidence",
+          "Reproduce the failure in a safe sandbox",
+          "Draft a patch and verify with tests",
+          "Request approver confirmation before opening a PR",
+        ],
       })
     );
 
@@ -64,32 +102,32 @@ function registerHandlers(bot: Chat) {
     await thread.setState({ status: "idle", incidentSummary: text });
 
     // Start the workflow
-    const runId = nanoid();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
     try {
       const res = await fetch(`${appUrl}/api/runs/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          runId,
-          repo: {
-            owner: "unknown",
-            name: "unknown",
-            defaultBranch: "main",
-          },
+          source: thread.id.startsWith("github:") ? "github" : "slack",
+          mode: "apply_verify",
+          environment: "staging",
+          repo,
           incident: {
             summaryText: text,
             artifacts: [],
           },
           config: {
-            testCommand: "npm test",
             maxAgentIterations: 5,
+          },
+          threadContext: {
+            platform: thread.id.startsWith("github:") ? "github" : "slack",
+            threadId: thread.id,
           },
         }),
       });
 
       if (res.ok) {
+        const payload = await res.json();
+        const runId = payload.runId as string;
         await thread.setState({ runId, status: "running" });
 
         // Register the thread so the notifier can post updates back
@@ -98,9 +136,17 @@ function registerHandlers(bot: Chat) {
         await ack.edit(
           runStartedCard({
             runId,
-            repo: "unknown/unknown",
+            repo: `${repo.owner}/${repo.name}`,
             summary: text.slice(0, 200),
-            traceUrl: `${appUrl}/runs/${runId}`,
+            mode: "apply verify",
+            environment: "staging",
+            nextSteps: [
+              "Evidence extraction",
+              "Sandbox reproduction",
+              "Patch and verification",
+              "Approval before PR",
+            ],
+            traceUrl: `${appUrl}${payload.traceUrl ?? `/runs/${runId}`}`,
           })
         );
       } else {
@@ -127,66 +173,12 @@ function registerHandlers(bot: Chat) {
       );
     } else if (s.status === "awaiting_approval") {
       await thread.post(
-        `Run \`${s.runId}\` is waiting for approval. Use the Approve/Reject buttons above.`
+        `Run \`${s.runId}\` is waiting for approval. Open the web approval console from the latest receipt card.`
       );
     } else if (s.status === "done" || s.status === "failed") {
       await thread.post(
         `Run \`${s.runId}\` has ${s.status === "done" ? "completed" : "failed"}. Start a new run by mentioning me again.`
       );
-    }
-  });
-
-  // Approve button clicked
-  bot.onAction("approve", async (event) => {
-    const runId = event.value;
-    if (!runId || !event.thread) return;
-
-    console.log(`[bot] approve action for run ${runId}`);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-    try {
-      await fetch(`${appUrl}/api/hooks/approval`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: `approval:${runId}`,
-          approved: true,
-          comment: `Approved by ${event.user.userName} via chat`,
-        }),
-      });
-
-      await event.thread.post("Approved. Creating PR...");
-      await event.thread.setState({ status: "running" });
-    } catch (err) {
-      console.error("[bot] approval failed:", err);
-      await event.thread.post(`Approval failed: ${err}`);
-    }
-  });
-
-  // Reject button clicked
-  bot.onAction("reject", async (event) => {
-    const runId = event.value;
-    if (!runId || !event.thread) return;
-
-    console.log(`[bot] reject action for run ${runId}`);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-    try {
-      await fetch(`${appUrl}/api/hooks/approval`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: `approval:${runId}`,
-          approved: false,
-          comment: `Rejected by ${event.user.userName} via chat`,
-        }),
-      });
-
-      await event.thread.post("Rejected. Run stopped.");
-      await event.thread.setState({ status: "failed" });
-    } catch (err) {
-      console.error("[bot] rejection failed:", err);
-      await event.thread.post(`Rejection failed: ${err}`);
     }
   });
 }

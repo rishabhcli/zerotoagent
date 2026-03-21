@@ -9,9 +9,14 @@ export interface Recipe {
   test_command: string;
   install_command: string;
   build_command: string | null;
+  repro_command: string | null;
   package_manager: string;
   allowed_domains: string[];
+  allowed_command_categories?: string[];
   snapshot_id: string | null;
+  ci_workflow_name?: string | null;
+  installation_id?: number | null;
+  enabled?: boolean;
 }
 
 export function RecipeViewer({ recipe }: { recipe: Recipe }) {
@@ -25,6 +30,10 @@ export function RecipeViewer({ recipe }: { recipe: Recipe }) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
+            <p className="text-muted-foreground">Enabled</p>
+            <p className="font-mono">{recipe.enabled === false ? "false" : "true"}</p>
+          </div>
+          <div>
             <p className="text-muted-foreground">Package Manager</p>
             <p className="font-mono">{recipe.package_manager}</p>
           </div>
@@ -36,12 +45,30 @@ export function RecipeViewer({ recipe }: { recipe: Recipe }) {
             <p className="text-muted-foreground">Install Command</p>
             <p className="font-mono">{recipe.install_command}</p>
           </div>
+          {recipe.repro_command && (
+            <div>
+              <p className="text-muted-foreground">Repro Command</p>
+              <p className="font-mono">{recipe.repro_command}</p>
+            </div>
+          )}
           {recipe.build_command && (
             <div>
               <p className="text-muted-foreground">Build Command</p>
               <p className="font-mono">{recipe.build_command}</p>
             </div>
           )}
+          {recipe.ci_workflow_name && (
+            <div>
+              <p className="text-muted-foreground">CI Workflow</p>
+              <p className="font-mono">{recipe.ci_workflow_name}</p>
+            </div>
+          )}
+          {recipe.installation_id ? (
+            <div>
+              <p className="text-muted-foreground">GitHub App Install</p>
+              <p className="font-mono">{recipe.installation_id}</p>
+            </div>
+          ) : null}
         </div>
 
         {recipe.allowed_domains.length > 0 && (
@@ -59,6 +86,22 @@ export function RecipeViewer({ recipe }: { recipe: Recipe }) {
             </div>
           </>
         )}
+
+        {recipe.allowed_command_categories && recipe.allowed_command_categories.length > 0 ? (
+          <>
+            <Separator />
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Allowed Command Categories</p>
+              <div className="flex flex-wrap gap-1">
+                {recipe.allowed_command_categories.map((category) => (
+                  <Badge key={category} variant="secondary" className="font-mono text-xs">
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : null}
 
         {recipe.snapshot_id && (
           <>

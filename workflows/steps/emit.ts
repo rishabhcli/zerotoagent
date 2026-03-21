@@ -1,22 +1,14 @@
-export type RunEventType =
-  | "run.started"
-  | "incident.parsed"
-  | "repo.focus"
-  | "sandbox.created"
-  | "sandbox.repro"
-  | "sandbox.patch_attempt"
-  | "sandbox.tests"
-  | "verification.done"
-  | "approval.requested"
-  | "approval.resolved"
-  | "pr.created"
-  | "run.completed"
-  | "run.failed";
+import type { RunEventKind } from "@/lib/patchpilot/contracts";
+import { notifyThread } from "@/lib/bot-notifier";
+import { getSupabaseAdmin } from "@/lib/patchpilot/supabase";
+import { redactUnknown } from "@/lib/patchpilot/redaction";
+
+export type RunEventType = RunEventKind;
 
 const STATUS_MAP: Partial<Record<RunEventType, string>> = {
   "run.started": "running",
   "approval.requested": "awaiting_approval",
-  "pr.created": "completed",
+  "run.completed": "completed",
   "run.failed": "failed",
 };
 
@@ -31,17 +23,11 @@ export async function emitRunEvent(event: {
   "use step";
 
   // Graceful fallback: log to console if Supabase is not configured
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
     console.log(`[run:${event.runId}] seq=${event.seq} ${event.type}`, event.data ?? "");
     return;
   }
-
-  const { createClient } = await import("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
 
   // Insert event
   const { error: insertError } = await supabase.from("run_events").insert({
@@ -49,7 +35,7 @@ export async function emitRunEvent(event: {
     ts: new Date().toISOString(),
     seq: event.seq,
     type: event.type,
-    data: event.data ?? {},
+    data: redactUnknown(event.data ?? {}),
     span_id: event.spanId ?? null,
     tool_name: event.toolName ?? null,
   });
@@ -75,4 +61,9 @@ export async function emitRunEvent(event: {
       .update({ status: decision.approved ? "approved" : "rejected" })
       .eq("id", event.runId);
   }
+
+  await notifyThread(event.runId, {
+    type: event.type,
+    data: (event.data as Record<string, unknown> | undefined) ?? undefined,
+  });
 }

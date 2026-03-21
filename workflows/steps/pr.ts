@@ -18,14 +18,14 @@ export async function createPrStep(input: {
 
   console.log(`[run:${input.runId}] pr step: creating PR for ${input.repo.owner}/${input.repo.name}`);
 
-  // If GitHub App is not configured, return mock data for hackathon dev
-  if (!process.env.GITHUB_APP_ID || !input.repo.installationId) {
-    console.log(`[run:${input.runId}] pr step: no GitHub App configured, returning mock PR`);
-    return {
-      prUrl: `https://github.com/${input.repo.owner}/${input.repo.name}/pull/0`,
-      prNumber: 0,
-      branchName: input.branchName,
-    };
+  if (!process.env.GITHUB_APP_ID || !process.env.GITHUB_PRIVATE_KEY) {
+    throw new Error("GitHub App credentials are not configured.");
+  }
+
+  if (!input.repo.installationId) {
+    throw new Error(
+      `No GitHub App installation is configured for ${input.repo.owner}/${input.repo.name}.`
+    );
   }
 
   const token = await getWriteToken(input.repo.installationId);
@@ -120,30 +120,16 @@ export async function createPrStep(input: {
 
   const prData = await prRes.json();
 
-  // 5. Store in Supabase (idempotent upsert)
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    const { createClient } = await import("@supabase/supabase-js");
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { persistSession: false } }
-    );
-    await supabase.from("prs").upsert({
-      run_id: input.runId,
-      provider: "github",
-      repo_owner: input.repo.owner,
-      repo_name: input.repo.name,
-      pr_number: prData.number,
-      pr_url: prData.html_url,
-    }, { onConflict: "run_id" });
-  }
-
   console.log(`[run:${input.runId}] pr step: created PR #${prData.number}`);
+
+  const headRefRes = await fetch(`${apiBase}/git/ref/heads/${input.branchName}`, { headers });
+  const headRefData = headRefRes.ok ? await headRefRes.json() : null;
 
   return {
     prUrl: prData.html_url as string,
     prNumber: prData.number as number,
     branchName: input.branchName,
+    headSha: (headRefData?.object?.sha as string | undefined) ?? baseSha,
   };
 }
 

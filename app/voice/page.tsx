@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AudioCapture } from "@/lib/voice/audio-capture";
 import { RealtimeSTTClient } from "@/lib/voice/stt-client";
+import { createPatchPilotRunId } from "@/lib/patchpilot/run-id";
 
 type VoiceState = "idle" | "listening" | "stopped" | "sending" | "done" | "error";
 
@@ -14,6 +16,10 @@ export default function VoicePage() {
   const [committedTexts, setCommittedTexts] = useState<string[]>([]);
   const [runId, setRunId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [repoOwner, setRepoOwner] = useState(process.env.NEXT_PUBLIC_PATCHPILOT_DEFAULT_REPO_OWNER ?? "demo");
+  const [repoName, setRepoName] = useState(process.env.NEXT_PUBLIC_PATCHPILOT_DEFAULT_REPO_NAME ?? "shop-api");
+  const [repoBranch, setRepoBranch] = useState(process.env.NEXT_PUBLIC_PATCHPILOT_DEFAULT_REPO_BRANCH ?? "main");
+  const [environment, setEnvironment] = useState("staging");
 
   const captureRef = useRef<AudioCapture | null>(null);
   const sttRef = useRef<RealtimeSTTClient | null>(null);
@@ -76,13 +82,19 @@ export default function VoicePage() {
     setState("sending");
 
     try {
+      const newRunId = createPatchPilotRunId();
       const res = await fetch("/api/runs/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          repo: { owner: "unknown", name: "unknown", defaultBranch: "main" },
+          runId: newRunId,
+          source: "voice",
+          mode: "apply_verify",
+          environment,
+          repo: { owner: repoOwner, name: repoName, defaultBranch: repoBranch },
           incident: { summaryText: fullTranscript, artifacts: [] },
-          config: { testCommand: "npm test", maxAgentIterations: 5 },
+          voiceContext: { transcript: fullTranscript, language: "en", persona: "neutral" },
+          config: { maxAgentIterations: 5 },
         }),
       });
 
@@ -99,7 +111,7 @@ export default function VoicePage() {
       setError(err instanceof Error ? err.message : "Network error");
       setState("error");
     }
-  }, [committedTexts]);
+  }, [committedTexts, environment, repoBranch, repoName, repoOwner]);
 
   const fullTranscript = committedTexts.join(" ");
 
@@ -109,10 +121,45 @@ export default function VoicePage() {
         <CardHeader>
           <CardTitle className="text-2xl">Call PatchPilot</CardTitle>
           <p className="text-muted-foreground">
-            Speak your incident summary. PatchPilot will transcribe, diagnose, and fix it.
+            Speak the incident while selecting the repo scope PatchPilot should verify against. Voice is browser-only in v1; every meaningful action still appears in the web run trace.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Repo owner</span>
+              <input
+                value={repoOwner}
+                onChange={(event) => setRepoOwner(event.target.value)}
+                className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Repo name</span>
+              <input
+                value={repoName}
+                onChange={(event) => setRepoName(event.target.value)}
+                className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Branch</span>
+              <input
+                value={repoBranch}
+                onChange={(event) => setRepoBranch(event.target.value)}
+                className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              <span className="font-medium">Environment</span>
+              <input
+                value={environment}
+                onChange={(event) => setEnvironment(event.target.value)}
+                className="rounded-xl border border-border bg-background px-3 py-2 outline-none transition focus:border-primary"
+              />
+            </label>
+          </div>
+
           {/* Mic button */}
           <div className="flex justify-center">
             {state === "idle" || state === "error" ? (
@@ -172,12 +219,12 @@ export default function VoicePage() {
               <p className="text-sm text-muted-foreground mt-1">
                 Run ID: <code className="font-mono">{runId}</code>
               </p>
-              <a
+              <Link
                 href={`/runs/${runId}`}
-                className="text-sm text-primary underline mt-2 inline-block"
+                className="mt-2 inline-block text-sm text-primary underline"
               >
                 View Run Trace
-              </a>
+              </Link>
             </div>
           )}
 

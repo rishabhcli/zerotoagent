@@ -27,7 +27,7 @@ export default async function RecipesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Agent Recipes</h1>
         <p className="text-muted-foreground">
-          Configuration for each repository's agent workflow
+          Allowlisted repo policies, command categories, network domains, and CI wiring for each repository workflow.
         </p>
       </div>
 

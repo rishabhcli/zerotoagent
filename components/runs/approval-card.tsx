@@ -6,10 +6,16 @@ import { Button } from "@/components/ui/button";
 
 export function ApprovalCard({
   runId,
-  token,
+  requiredRole = "approver",
+  patchSummary,
+  testSummary,
+  diffstat,
 }: {
   runId: string;
-  token: string;
+  requiredRole?: string;
+  patchSummary?: string | null;
+  testSummary?: string | null;
+  diffstat?: string | null;
 }) {
   const [status, setStatus] = useState<"pending" | "submitting" | "done">("pending");
   const [result, setResult] = useState<string | null>(null);
@@ -17,10 +23,10 @@ export function ApprovalCard({
   const handleDecision = async (approved: boolean) => {
     setStatus("submitting");
     try {
-      const res = await fetch("/api/hooks/approval", {
+      const res = await fetch(`/api/runs/${runId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, approved }),
+        body: JSON.stringify({ approved }),
       });
       if (res.ok) {
         setResult(approved ? "Approved" : "Rejected");
@@ -40,11 +46,32 @@ export function ApprovalCard({
       <CardHeader>
         <CardTitle className="text-lg">Approval Required</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
           Run <code className="font-mono">{runId}</code> has a verified patch
           ready. Approve to create the PR.
         </p>
+        <div className="grid gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground">Required role</span>
+            <span className="font-medium capitalize">{requiredRole}</span>
+          </div>
+          {testSummary ? (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Verification</span>
+              <span className="font-medium">{testSummary}</span>
+            </div>
+          ) : null}
+          {diffstat ? (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Diffstat</span>
+              <span className="font-medium">{diffstat}</span>
+            </div>
+          ) : null}
+        </div>
+        {patchSummary ? (
+          <p className="text-sm leading-6 text-foreground/90">{patchSummary}</p>
+        ) : null}
         {result && (
           <p className="mt-2 text-sm font-medium">
             {result}

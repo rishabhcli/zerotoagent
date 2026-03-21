@@ -2,6 +2,8 @@ export function runStartedComment(opts: {
   runId: string;
   repo: string;
   summary: string;
+  mode?: string;
+  environment?: string;
   traceUrl?: string;
 }) {
   return [
@@ -9,6 +11,8 @@ export function runStartedComment(opts: {
     `- **Run ID**: \`${opts.runId}\``,
     `- **Repo**: ${opts.repo}`,
     `- **Status**: In Progress`,
+    ...(opts.mode ? [`- **Mode**: ${opts.mode.replace("_", " ")}`] : []),
+    ...(opts.environment ? [`- **Environment**: ${opts.environment}`] : []),
     opts.traceUrl ? `- **[View Run Trace](${opts.traceUrl})**` : "",
     "",
     `### What I understood`,
@@ -26,39 +30,57 @@ export function runStartedComment(opts: {
 
 export function approvalRequestComment(opts: {
   runId: string;
-  prTitle: string;
-  diffstat: string;
+  prTitle?: string;
+  patchSummary: string;
+  diffstat?: string;
   testSummary: string;
+  requiredRole?: string;
+  approvalUrl: string;
+  traceUrl?: string;
 }) {
   return [
     `## PatchPilot — Approval Required`,
     `- **Run ID**: \`${opts.runId}\``,
-    `- **Proposed PR**: ${opts.prTitle}`,
+    `- **Proposed PR**: ${opts.prTitle ?? "Verified fix ready for PR creation"}`,
+    ...(opts.requiredRole ? [`- **Required role**: ${opts.requiredRole}`] : []),
+    "",
+    `### Patch summary`,
+    opts.patchSummary,
     "",
     `### Verification`,
     `- Tests: ${opts.testSummary}`,
     "",
-    `### Diffstat`,
-    "```",
-    opts.diffstat,
-    "```",
+    ...(opts.diffstat
+      ? [
+          `### Diffstat`,
+          "```",
+          opts.diffstat,
+          "```",
+          "",
+        ]
+      : []),
+    `[Open Approval Console](${opts.approvalUrl})`,
+    ...(opts.traceUrl ? [`[Review Run Trace](${opts.traceUrl})`] : []),
     "",
-    `> Approve or reject this fix via the dashboard or Slack.`,
+    `> Approval is handled in the authenticated web console.`,
   ].join("\n");
 }
 
 export function finalReceiptComment(opts: {
   runId: string;
-  prUrl: string;
-  prNumber: number;
+  prUrl?: string;
+  prNumber?: number;
   rootCause: string;
   testSummary: string;
+  confidence?: number;
+  receiptUrl?: string;
   traceUrl?: string;
 }) {
   return [
     `## PatchPilot — Verified Fix`,
-    `- **PR**: [#${opts.prNumber}](${opts.prUrl})`,
+    ...(opts.prUrl && opts.prNumber != null ? [`- **PR**: [#${opts.prNumber}](${opts.prUrl})`] : []),
     `- **Run ID**: \`${opts.runId}\``,
+    ...(opts.confidence != null ? [`- **Patch confidence**: ${opts.confidence}/100`] : []),
     "",
     `### Root cause`,
     opts.rootCause.slice(0, 500),
@@ -66,6 +88,7 @@ export function finalReceiptComment(opts: {
     `### Verification`,
     `- ${opts.testSummary}`,
     "",
+    ...(opts.receiptUrl ? [`[Download Receipts](${opts.receiptUrl})`] : []),
     opts.traceUrl ? `[View Run Trace](${opts.traceUrl})` : "",
   ]
     .filter(Boolean)
@@ -75,6 +98,8 @@ export function finalReceiptComment(opts: {
 export function runFailedComment(opts: {
   runId: string;
   reason: string;
+  remediation?: string[];
+  traceUrl?: string;
 }) {
   return [
     `## PatchPilot — Run Failed`,
@@ -82,5 +107,13 @@ export function runFailedComment(opts: {
     "",
     `### Reason`,
     opts.reason.slice(0, 500),
+    ...(opts.remediation && opts.remediation.length > 0
+      ? [
+          "",
+          `### Remediation`,
+          ...opts.remediation.map((item) => `- ${item}`),
+        ]
+      : []),
+    ...(opts.traceUrl ? ["", `[Open Run Trace](${opts.traceUrl})`] : []),
   ].join("\n");
 }

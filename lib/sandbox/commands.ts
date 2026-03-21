@@ -1,16 +1,50 @@
 import type { Sandbox } from "@vercel/sandbox";
+import type { CommandCategory, RepoPolicy } from "@/lib/patchpilot/contracts";
+import { assertCommandAllowed } from "@/lib/patchpilot/policy";
+import { redactSensitiveText } from "@/lib/patchpilot/redaction";
 
 export type CommandResult = {
   exitCode: number;
   stdout: string;
   stderr: string;
   durationMs: number;
+  command: string;
+  category: CommandCategory;
+};
+
+const legacyPolicy: RepoPolicy = {
+  id: "legacy-policy",
+  repoOwner: "unknown",
+  repoName: "unknown",
+  enabled: true,
+  packageManager: "pnpm",
+  installCommand: "pnpm install",
+  reproCommand: null,
+  testCommand: "pnpm test",
+  buildCommand: null,
+  snapshotId: null,
+  ciWorkflowName: null,
+  allowedOutboundDomains: [],
+  allowedCommandCategories: [
+    "install",
+    "repro",
+    "test",
+    "build",
+    "search",
+    "read",
+    "write",
+    "diff",
+  ],
+  metadata: {},
 };
 
 export async function runShellCommand(
   sandbox: Sandbox,
-  command: string
+  command: string,
+  category: CommandCategory,
+  policy: RepoPolicy
 ): Promise<CommandResult> {
+  assertCommandAllowed(policy, category);
   const start = Date.now();
   const result = await sandbox.runCommand("bash", ["-c", command]);
   const stdout = await result.stdout();
@@ -18,35 +52,103 @@ export async function runShellCommand(
 
   return {
     exitCode: result.exitCode,
-    stdout,
-    stderr,
+    stdout: redactSensitiveText(stdout),
+    stderr: redactSensitiveText(stderr),
     durationMs: Date.now() - start,
+    command,
+    category,
   };
 }
 
 export async function installDeps(
   sandbox: Sandbox,
-  packageManager: string = "pnpm"
+  policy: RepoPolicy,
+  installCommand: string
+): Promise<CommandResult>;
+export async function installDeps(
+  sandbox: Sandbox,
+  installCommand: string
+): Promise<CommandResult>;
+export async function installDeps(
+  sandbox: Sandbox,
+  policyOrCommand: RepoPolicy | string,
+  installCommand?: string
 ): Promise<CommandResult> {
-  const commands: Record<string, string> = {
-    pnpm: "pnpm install --frozen-lockfile || pnpm install",
-    npm: "npm ci || npm install",
-    yarn: "yarn install --frozen-lockfile",
-  };
-  const cmd = commands[packageManager] ?? commands.pnpm;
-  console.log(`[sandbox:${sandbox.sandboxId}] installing deps: ${cmd}`);
-  return runShellCommand(sandbox, cmd);
+  const policy =
+    typeof policyOrCommand === "string" ? legacyPolicy : policyOrCommand;
+  const command =
+    typeof policyOrCommand === "string" ? policyOrCommand : installCommand;
+
+  if (!command) {
+    throw new Error("installDeps requires an install command");
+  }
+
+  console.log(`[sandbox:${sandbox.sandboxId}] installing deps: ${command}`);
+  return runShellCommand(sandbox, command, "install", policy);
+}
+
+export async function runRecipeCommand(
+  sandbox: Sandbox,
+  policy: RepoPolicy,
+  category: Extract<CommandCategory, "repro" | "test" | "build">,
+  command: string
+): Promise<CommandResult> {
+  console.log(`[sandbox:${sandbox.sandboxId}] running ${category}: ${command}`);
+  return runShellCommand(sandbox, command, category, policy);
 }
 
 export async function runTestCommand(
   sandbox: Sandbox,
-  testCommand: string
+  policy: RepoPolicy,
+  command: string
+): Promise<CommandResult>;
+export async function runTestCommand(
+  sandbox: Sandbox,
+  command: string
+): Promise<CommandResult>;
+export async function runTestCommand(
+  sandbox: Sandbox,
+  policyOrCommand: RepoPolicy | string,
+  command?: string
 ): Promise<CommandResult> {
-  console.log(`[sandbox:${sandbox.sandboxId}] running tests: ${testCommand}`);
-  return runShellCommand(sandbox, testCommand);
+  const policy =
+    typeof policyOrCommand === "string" ? legacyPolicy : policyOrCommand;
+  const testCommand =
+    typeof policyOrCommand === "string" ? policyOrCommand : command;
+
+  if (!testCommand) {
+    throw new Error("runTestCommand requires a command");
+  }
+
+  return runRecipeCommand(sandbox, policy, "test", testCommand);
 }
 
-export async function extractDiff(sandbox: Sandbox): Promise<string> {
-  const result = await sandbox.runCommand("git", ["diff"]);
-  return result.stdout();
+export async function searchRepo(
+  sandbox: Sandbox,
+  policy: RepoPolicy,
+  query: string
+): Promise<CommandResult> {
+  const command = `rg -n --hidden --glob '!node_modules' ${JSON.stringify(query)} .`;
+  return runShellCommand(sandbox, command, "search", policy);
+}
+
+export async function listRepoFiles(
+  sandbox: Sandbox,
+  policy: RepoPolicy
+): Promise<CommandResult> {
+  return runShellCommand(sandbox, "rg --files .", "read", policy);
+}
+
+export async function extractDiff(
+  sandbox: Sandbox,
+  policy: RepoPolicy
+): Promise<CommandResult>;
+export async function extractDiff(
+  sandbox: Sandbox
+): Promise<CommandResult>;
+export async function extractDiff(
+  sandbox: Sandbox,
+  policy: RepoPolicy = legacyPolicy
+): Promise<CommandResult> {
+  return runShellCommand(sandbox, "git diff --no-ext-diff", "diff", policy);
 }

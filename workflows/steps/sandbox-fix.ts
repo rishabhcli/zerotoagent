@@ -1,10 +1,51 @@
 import { generateText, stepCountIs } from "ai";
-import { createRepoSandbox, createFromSnapshot, lockdownEgress, cleanupSandbox } from "@/lib/sandbox/client";
-import { installDeps, runTestCommand, extractDiff } from "@/lib/sandbox/commands";
-import { createSandboxTools } from "@/lib/ai/tools";
-import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
 import { getPrimaryModel } from "@/lib/ai/models";
+import { SYSTEM_PROMPTS } from "@/lib/ai/prompts";
+import { createSandboxTools } from "@/lib/ai/tools";
 import { getReadToken } from "@/lib/github";
+import type { RepoPolicy } from "@/lib/patchpilot/contracts";
+import { redactUnknown } from "@/lib/patchpilot/redaction";
+import {
+  applyInstallNetworkPolicy,
+  cleanupSandbox,
+  createFromSnapshot,
+  createRepoSandbox,
+  lockdownEgress,
+} from "@/lib/sandbox/client";
+import {
+  extractDiff,
+  installDeps,
+  runRecipeCommand,
+  type CommandResult,
+} from "@/lib/sandbox/commands";
+
+export type SandboxFixResult = {
+  reproduced: boolean;
+  flaky: boolean;
+  patch: {
+    unifiedDiff: string;
+  };
+  tests: {
+    status: "pass" | "fail" | "flaky";
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+    attempts: CommandResult[];
+  };
+  evidence: {
+    reproduction: CommandResult;
+    install: CommandResult;
+    build?: CommandResult | null;
+    sandboxId: string;
+    iterationsUsed: number;
+    toolReceipts: unknown[];
+    networkPolicy: {
+      install: string[] | "allow-all";
+      locked: "deny-all";
+    };
+  };
+  remediation: string[];
+};
 
 export async function sandboxFixStep(input: {
   runId: string;
@@ -14,179 +55,208 @@ export async function sandboxFixStep(input: {
     defaultBranch: string;
     installationId?: number;
   };
-  parsed: { normalizedSummary: string; suspectedRootCause: string };
+  parsed: {
+    normalizedSummary: string;
+    suspectedRootCause: string;
+    knownUnknowns: string[];
+    requestsForMissingInformation: string[];
+  };
   focus: Array<{ path: string; reason: string; confidence: number }>;
+  policy: RepoPolicy;
   config: {
-    testCommand: string;
-    packageManager?: string;
+    installCommand?: string;
+    reproCommand?: string;
+    testCommand?: string;
+    buildCommand?: string;
     maxAgentIterations: number;
   };
-  snapshotId?: string;
 }) {
   "use step";
 
-  const { runId, repo, parsed, focus, config } = input;
+  const { runId, repo, parsed, focus, config, policy } = input;
   let sandbox: Awaited<ReturnType<typeof createRepoSandbox>> | undefined;
 
-  console.log(`[run:${runId}] sandbox-fix: starting for ${repo.owner}/${repo.name}`);
-
   try {
-    // 1. Create sandbox
-    try {
-      if (input.snapshotId) {
-        sandbox = await createFromSnapshot(input.snapshotId);
-      } else {
-        let password: string | undefined;
-        if (repo.installationId) {
-          password = await getReadToken(repo.installationId);
-        }
-
-        sandbox = await createRepoSandbox({
+    const readToken = repo.installationId ? await getReadToken(repo.installationId) : undefined;
+    sandbox = policy.snapshotId
+      ? await createFromSnapshot(policy.snapshotId)
+      : await createRepoSandbox({
           repoUrl: `https://github.com/${repo.owner}/${repo.name}.git`,
-          password,
+          password: readToken,
           runtime: "node24",
         });
-      }
-    } catch (sandboxErr) {
-      // Sandbox creation failed (no credentials, quota, etc.) — return mock data
-      // so the rest of the workflow can proceed for testing
-      console.warn(`[run:${runId}] sandbox-fix: sandbox creation failed, using mock data:`, sandboxErr);
-      return {
-        patch: {
-          unifiedDiff: [
-            "--- a/src/handler.ts",
-            "+++ b/src/handler.ts",
-            "@@ -10,1 +10,1 @@",
-            "-  return null;",
-            "+  return response;",
-          ].join("\n"),
-        },
-        tests: {
-          status: "pass" as const,
-          exitCode: 0,
-          stdout: "Tests: 12 passed, 0 failed (sandbox unavailable — mock data)",
-          stderr: "",
-        },
-        evidence: {
-          reproductionProof: { exitCode: 1, stderr: "Error: handler returned null" },
-          finalTestLogs: "Mock: all tests passed",
-          sandboxId: "mock-sandbox",
-          iterationsUsed: 0,
-        },
-      };
+
+    const installCommand = config.installCommand ?? policy.installCommand;
+    const reproCommand = config.reproCommand ?? policy.reproCommand ?? config.testCommand ?? policy.testCommand;
+    const testCommand = config.testCommand ?? policy.testCommand;
+    const buildCommand = config.buildCommand ?? policy.buildCommand ?? undefined;
+
+    const networkInstallState = await applyInstallNetworkPolicy(sandbox, policy);
+    const installResult = await installDeps(sandbox, policy, installCommand);
+    const networkLockedState = await lockdownEgress(sandbox);
+
+    if (installResult.exitCode !== 0) {
+      throw new Error(
+        `Sandbox dependency installation failed with exit code ${installResult.exitCode}.`
+      );
     }
 
-    // 2. Install dependencies (network still open)
-    console.log(`[run:${runId}] sandbox-fix: installing deps`);
-    const installResult = await installDeps(sandbox, config.packageManager ?? "pnpm");
-    console.log(`[run:${runId}] sandbox-fix: install exit=${installResult.exitCode} (${installResult.durationMs}ms)`);
+    const reproduction = await runRecipeCommand(sandbox, policy, "repro", reproCommand);
+    const reproduced = reproduction.exitCode !== 0;
 
-    // 3. Lock down egress
-    await lockdownEgress(sandbox);
-
-    // 4. Run reproduction test (should FAIL to confirm the bug)
-    console.log(`[run:${runId}] sandbox-fix: running reproduction test`);
-    const reproResult = await runTestCommand(sandbox, config.testCommand);
-    console.log(`[run:${runId}] sandbox-fix: repro exit=${reproResult.exitCode}`);
-
-    const reproFailed = reproResult.exitCode !== 0;
-    if (!reproFailed) {
-      console.log(`[run:${runId}] sandbox-fix: tests already pass — nothing to fix`);
+    if (!reproduced) {
       return {
+        reproduced: false,
+        flaky: false,
         patch: { unifiedDiff: "" },
         tests: {
-          status: "pass" as const,
-          exitCode: 0,
-          stdout: reproResult.stdout,
-          stderr: reproResult.stderr,
+          status: "fail",
+          exitCode: reproduction.exitCode,
+          stdout: reproduction.stdout,
+          stderr: reproduction.stderr,
+          attempts: [reproduction],
         },
         evidence: {
-          reproductionProof: { exitCode: reproResult.exitCode, stderr: reproResult.stderr },
-          finalTestLogs: reproResult.stdout,
+          reproduction,
+          install: installResult,
+          build: null,
           sandboxId: sandbox.sandboxId,
           iterationsUsed: 0,
+          toolReceipts: [],
+          networkPolicy: {
+            install: networkInstallState,
+            locked: networkLockedState,
+          },
         },
+        remediation: [
+          "Upload additional logs or a request ID",
+          "Choose a more specific environment profile",
+          "Run PatchPilot replay after adding a repro command in the repo policy",
+        ],
       };
     }
 
-    // 5. AI agent tool loop
-    console.log(`[run:${runId}] sandbox-fix: starting AI agent loop (max ${config.maxAgentIterations} iterations)`);
-    const tools = createSandboxTools(sandbox);
-
-    const focusFilesList = focus
-      .map((f) => `- ${f.path} (${f.reason}, confidence: ${f.confidence})`)
-      .join("\n");
-
-    const agentPrompt = [
-      `You are fixing a bug in ${repo.owner}/${repo.name}.`,
-      "",
-      `## Incident`,
-      `Summary: ${parsed.normalizedSummary}`,
-      `Root cause: ${parsed.suspectedRootCause}`,
-      "",
-      `## Suspect files`,
-      focusFilesList || "(no specific files identified — explore the codebase)",
-      "",
-      `## Reproduction`,
-      `The test command \`${config.testCommand}\` failed with exit code ${reproResult.exitCode}.`,
-      `stderr (excerpt):`,
-      "```",
-      reproResult.stderr.slice(0, 3000),
-      "```",
-      `stdout (excerpt):`,
-      "```",
-      reproResult.stdout.slice(0, 3000),
-      "```",
-      "",
-      `## Instructions`,
-      `1. Read the suspect files to understand the code`,
-      `2. Identify the minimal fix for the root cause`,
-      `3. Edit the files to apply the fix`,
-      `4. Run tests with \`${config.testCommand}\` to verify`,
-      `5. If tests pass, call collectDiff to get the final patch`,
-      `6. If tests still fail, read the new errors and iterate`,
-      "",
-      `Make the MINIMAL change necessary. Do not refactor, add comments, or change unrelated code.`,
-    ].join("\n");
-
-    const result = await generateText({
-      model: getPrimaryModel(),
-      system: SYSTEM_PROMPTS.patchPlanning,
-      prompt: agentPrompt,
-      tools,
-      stopWhen: stepCountIs(config.maxAgentIterations * 5),
-      providerOptions: {
-        google: { thinkingConfig: { thinkingLevel: "high" } },
+    const tools = createSandboxTools(sandbox, {
+      policy,
+      commands: {
+        reproCommand,
+        testCommand,
+        buildCommand,
       },
     });
 
-    const iterationsUsed = result.steps?.length ?? 0;
-    console.log(`[run:${runId}] sandbox-fix: agent completed in ${iterationsUsed} steps`);
+    const focusFilesList = focus
+      .map((file) => `- ${file.path} (${file.reason}, confidence ${file.confidence})`)
+      .join("\n");
 
-    // 6. Extract the final diff
-    const unifiedDiff = await extractDiff(sandbox);
+    const prompt = [
+      `You are fixing a bug in ${repo.owner}/${repo.name}.`,
+      ``,
+      `Summary: ${parsed.normalizedSummary}`,
+      `Likely root cause: ${parsed.suspectedRootCause}`,
+      `Known unknowns: ${parsed.knownUnknowns.join("; ") || "none"}`,
+      `Missing information requests: ${parsed.requestsForMissingInformation.join("; ") || "none"}`,
+      ``,
+      `Suspect files:`,
+      focusFilesList || "- none identified yet; search the repo",
+      ``,
+      `The reproduction command \`${reproCommand}\` failed before the fix.`,
+      `stderr excerpt:`,
+      "```",
+      reproduction.stderr.slice(0, 3000),
+      "```",
+      `stdout excerpt:`,
+      "```",
+      reproduction.stdout.slice(0, 3000),
+      "```",
+      ``,
+      `Use only the provided tools. Make the smallest safe patch possible.`,
+      `Run tests before collecting the diff. Run the build if it is relevant.`,
+      `Do not bypass policy or edit unrelated files.`,
+    ].join("\n");
 
-    // 7. Run final verification
-    console.log(`[run:${runId}] sandbox-fix: running final verification`);
-    const finalResult = await runTestCommand(sandbox, config.testCommand);
-    console.log(`[run:${runId}] sandbox-fix: final test exit=${finalResult.exitCode}`);
+    const agentResult = await generateText({
+      model: getPrimaryModel(),
+      system: SYSTEM_PROMPTS.patchPlanning,
+      prompt,
+      tools,
+      stopWhen: stepCountIs(config.maxAgentIterations * 6),
+      providerOptions: {
+        google: { thinkingConfig: { thinkingLevel: "high" } },
+      },
+      experimental_include: {
+        requestBody: false,
+        responseBody: false,
+      },
+    });
 
-    const sandboxId = sandbox.sandboxId;
+    const diffResult = await extractDiff(sandbox, policy);
+    const verificationAttempts: CommandResult[] = [];
+
+    verificationAttempts.push(await runRecipeCommand(sandbox, policy, "test", testCommand));
+    if (verificationAttempts[0].exitCode !== 0) {
+      verificationAttempts.push(await runRecipeCommand(sandbox, policy, "test", testCommand));
+      verificationAttempts.push(await runRecipeCommand(sandbox, policy, "test", testCommand));
+    }
+
+    const successfulAttempts = verificationAttempts.filter((attempt) => attempt.exitCode === 0);
+    const flaky =
+      successfulAttempts.length > 0 && successfulAttempts.length < verificationAttempts.length;
+    const finalAttempt = verificationAttempts[verificationAttempts.length - 1];
+
+    let buildResult: CommandResult | null = null;
+    if (!flaky && successfulAttempts.length === verificationAttempts.length && buildCommand) {
+      buildResult = await runRecipeCommand(sandbox, policy, "build", buildCommand);
+    }
+
+    const status: SandboxFixResult["tests"]["status"] = flaky
+      ? "flaky"
+      : finalAttempt.exitCode === 0 && (!buildResult || buildResult.exitCode === 0)
+        ? "pass"
+        : "fail";
 
     return {
-      patch: { unifiedDiff },
+      reproduced: true,
+      flaky,
+      patch: {
+        unifiedDiff: diffResult.stdout,
+      },
       tests: {
-        status: finalResult.exitCode === 0 ? ("pass" as const) : ("fail" as const),
-        exitCode: finalResult.exitCode,
-        stdout: finalResult.stdout,
-        stderr: finalResult.stderr,
+        status,
+        exitCode:
+          status === "pass"
+            ? 0
+            : buildResult && buildResult.exitCode !== 0
+              ? buildResult.exitCode
+              : finalAttempt.exitCode,
+        stdout: buildResult?.stdout ?? finalAttempt.stdout,
+        stderr: buildResult?.stderr ?? finalAttempt.stderr,
+        attempts: verificationAttempts,
       },
       evidence: {
-        reproductionProof: { exitCode: reproResult.exitCode, stderr: reproResult.stderr },
-        finalTestLogs: finalResult.stdout,
-        sandboxId,
-        iterationsUsed,
+        reproduction,
+        install: installResult,
+        build: buildResult,
+        sandboxId: sandbox.sandboxId,
+        iterationsUsed: agentResult.steps?.length ?? 0,
+        toolReceipts: redactUnknown(agentResult.steps ?? []),
+        networkPolicy: {
+          install: networkInstallState,
+          locked: networkLockedState,
+        },
       },
+      remediation:
+        status === "pass"
+          ? []
+          : flaky
+            ? [
+                "Verification was unstable across retries.",
+                "Quarantine or investigate the flaky tests before approving a PR.",
+              ]
+            : [
+                "Review the failing verification logs.",
+                "Retry with a smaller patch or a more specific reproduction command.",
+              ],
     };
   } finally {
     if (sandbox) {

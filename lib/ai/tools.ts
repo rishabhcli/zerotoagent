@@ -1,6 +1,14 @@
 import { tool } from "ai";
 import { z } from "zod";
 import type { Sandbox } from "@vercel/sandbox";
+import type { RepoPolicy } from "@/lib/patchpilot/contracts";
+import {
+  extractDiff,
+  listRepoFiles,
+  runRecipeCommand,
+  searchRepo,
+} from "@/lib/sandbox/commands";
+import { redactSensitiveText } from "@/lib/patchpilot/redaction";
 
 const MAX_STDOUT = 10_000;
 const MAX_STDERR = 5_000;
@@ -10,8 +18,48 @@ const MAX_STDERR = 5_000;
  * Each tool closes over the sandbox so the model can read/edit files
  * and run commands inside the isolated microVM.
  */
-export function createSandboxTools(sandbox: Sandbox) {
+export function createSandboxTools(
+  sandbox: Sandbox,
+  options: {
+    policy: RepoPolicy;
+    commands: {
+      reproCommand: string;
+      testCommand: string;
+      buildCommand?: string | null;
+    };
+  }
+) {
   return {
+    listFiles: tool({
+      description:
+        "List repository files. Use this before reading files if you need to discover the project structure.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const result = await listRepoFiles(sandbox, options.policy);
+        return {
+          exitCode: result.exitCode,
+          stdout: result.stdout.slice(0, MAX_STDOUT),
+          stderr: result.stderr.slice(0, MAX_STDERR),
+        };
+      },
+    }),
+
+    searchRepo: tool({
+      description:
+        "Search the repository with ripgrep. Use this to find symbols, error messages, or relevant code paths.",
+      inputSchema: z.object({
+        query: z.string().describe("Ripgrep query string"),
+      }),
+      execute: async ({ query }) => {
+        const result = await searchRepo(sandbox, options.policy, query);
+        return {
+          exitCode: result.exitCode,
+          stdout: result.stdout.slice(0, MAX_STDOUT),
+          stderr: result.stderr.slice(0, MAX_STDERR),
+        };
+      },
+    }),
+
     readFile: tool({
       description:
         "Read the contents of a file in the repository. Returns the file content as a string, or an error if the file does not exist.",
@@ -43,20 +91,22 @@ export function createSandboxTools(sandbox: Sandbox) {
       },
     }),
 
-    runCommand: tool({
+    runReproduction: tool({
       description:
-        "Run a shell command in the repository working directory. Use for inspecting project structure (ls, find), searching code (grep), checking types (tsc --noEmit), or any other diagnostic command.",
-      inputSchema: z.object({
-        command: z.string().describe("The shell command to run"),
-      }),
-      execute: async ({ command }) => {
-        const result = await sandbox.runCommand("bash", ["-c", command]);
-        const stdout = await result.stdout();
-        const stderr = await result.stderr();
+        "Run the repo's reproduction command. Use this when you want to confirm the failing behavior before or after making changes.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const result = await runRecipeCommand(
+          sandbox,
+          options.policy,
+          "repro",
+          options.commands.reproCommand
+        );
         return {
+          status: result.exitCode === 0 ? "pass" : "fail",
           exitCode: result.exitCode,
-          stdout: stdout.slice(0, MAX_STDOUT),
-          stderr: stderr.slice(0, MAX_STDERR),
+          stdout: result.stdout.slice(0, MAX_STDOUT),
+          stderr: result.stderr.slice(0, MAX_STDERR),
         };
       },
     }),
@@ -64,21 +114,44 @@ export function createSandboxTools(sandbox: Sandbox) {
     runTests: tool({
       description:
         "Run the project's test suite to verify your changes. Call this after making edits to check if the fix works.",
-      inputSchema: z.object({
-        testCommand: z
-          .string()
-          .describe("The test command to run, e.g. 'pnpm test' or 'npm test'"),
-      }),
-      execute: async ({ testCommand }) => {
-        const result = await sandbox.runCommand("bash", ["-c", testCommand]);
-        const exitCode = result.exitCode;
-        const stdout = await result.stdout();
-        const stderr = await result.stderr();
+      inputSchema: z.object({}),
+      execute: async () => {
+        const result = await runRecipeCommand(
+          sandbox,
+          options.policy,
+          "test",
+          options.commands.testCommand
+        );
         return {
-          status: exitCode === 0 ? ("pass" as const) : ("fail" as const),
-          exitCode,
-          stdout: stdout.slice(0, MAX_STDOUT),
-          stderr: stderr.slice(0, MAX_STDERR),
+          status: result.exitCode === 0 ? ("pass" as const) : ("fail" as const),
+          exitCode: result.exitCode,
+          stdout: result.stdout.slice(0, MAX_STDOUT),
+          stderr: result.stderr.slice(0, MAX_STDERR),
+        };
+      },
+    }),
+
+    runBuild: tool({
+      description:
+        "Run the repo's build command if one is configured. Use this after tests if build integrity matters for the fix.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        if (!options.commands.buildCommand) {
+          return { skipped: true, reason: "No build command configured for this repo." };
+        }
+
+        const result = await runRecipeCommand(
+          sandbox,
+          options.policy,
+          "build",
+          options.commands.buildCommand
+        );
+
+        return {
+          status: result.exitCode === 0 ? ("pass" as const) : ("fail" as const),
+          exitCode: result.exitCode,
+          stdout: result.stdout.slice(0, MAX_STDOUT),
+          stderr: result.stderr.slice(0, MAX_STDERR),
         };
       },
     }),
@@ -88,9 +161,8 @@ export function createSandboxTools(sandbox: Sandbox) {
         "Collect the git diff of all changes you have made. Call this when you are done patching and tests are passing.",
       inputSchema: z.object({}),
       execute: async () => {
-        const result = await sandbox.runCommand("git", ["diff"]);
-        const diff = await result.stdout();
-        return { diff };
+        const result = await extractDiff(sandbox, options.policy);
+        return { diff: redactSensitiveText(result.stdout) };
       },
     }),
   };

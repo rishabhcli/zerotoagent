@@ -10,9 +10,15 @@ function getApp() {
   });
 }
 
-export async function getReadToken(installationId: number): Promise<string> {
+export type InstallationOctokit = Awaited<ReturnType<App["getInstallationOctokit"]>>;
+
+export async function getInstallationOctokit(installationId: number): Promise<InstallationOctokit> {
   const app = getApp();
-  const octokit = await app.getInstallationOctokit(installationId);
+  return app.getInstallationOctokit(installationId);
+}
+
+export async function getReadToken(installationId: number): Promise<string> {
+  const octokit = await getInstallationOctokit(installationId);
   const response = await octokit.request(
     "POST /app/installations/{installation_id}/access_tokens",
     {
@@ -24,8 +30,7 @@ export async function getReadToken(installationId: number): Promise<string> {
 }
 
 export async function getWriteToken(installationId: number): Promise<string> {
-  const app = getApp();
-  const octokit = await app.getInstallationOctokit(installationId);
+  const octokit = await getInstallationOctokit(installationId);
   const response = await octokit.request(
     "POST /app/installations/{installation_id}/access_tokens",
     {

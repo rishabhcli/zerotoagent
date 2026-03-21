@@ -1,4 +1,5 @@
 import { Sandbox } from "@vercel/sandbox";
+import type { RepoPolicy } from "@/lib/patchpilot/contracts";
 
 export async function createRepoSandbox(opts: {
   repoUrl: string;
@@ -54,9 +55,29 @@ export async function createFromSnapshot(snapshotId: string) {
   return sandbox;
 }
 
+export async function applyInstallNetworkPolicy(
+  sandbox: Sandbox,
+  policy: RepoPolicy
+) {
+  if (policy.allowedOutboundDomains.length === 0) {
+    console.log(`[sandbox:${sandbox.sandboxId}] network policy: allow-all (no domains configured)`);
+    return "allow-all";
+  }
+
+  console.log(
+    `[sandbox:${sandbox.sandboxId}] network policy: allow ${policy.allowedOutboundDomains.join(", ")}`
+  );
+  await sandbox.updateNetworkPolicy({
+    allow: policy.allowedOutboundDomains,
+  });
+
+  return policy.allowedOutboundDomains;
+}
+
 export async function lockdownEgress(sandbox: Sandbox) {
   console.log(`[sandbox:${sandbox.sandboxId}] locking down egress`);
   await sandbox.updateNetworkPolicy("deny-all");
+  return "deny-all";
 }
 
 export async function cleanupSandbox(sandbox: Sandbox) {
