@@ -1,10 +1,28 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { RecipeViewer, type Recipe } from "@/components/recipes/recipe-viewer";
 import { requireAuth } from "@/lib/auth-guard";
+import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
 
-async function getRecipes(): Promise<Recipe[]> {
+async function getRecipes(): Promise<{
+  recipes: Recipe[];
+  syncedRepoCount: number | null;
+  installationCount: number | null;
+}> {
+  let syncedRepoCount: number | null = null;
+  let installationCount: number | null = null;
+
+  try {
+    const syncSummary = await syncGitHubInstallationRecipes();
+    if (syncSummary.synced) {
+      syncedRepoCount = syncSummary.discoveredRepoCount;
+      installationCount = syncSummary.installationCount;
+    }
+  } catch (error) {
+    console.error("[dashboard/recipes] failed to sync GitHub repositories", error);
+  }
+
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return [];
+    return { recipes: [], syncedRepoCount, installationCount };
   }
 
   const { createClient } = await import("@supabase/supabase-js");
@@ -14,13 +32,17 @@ async function getRecipes(): Promise<Recipe[]> {
     { auth: { persistSession: false } }
   );
 
-  const { data } = await supabase.from("recipes").select("*");
-  return (data as Recipe[]) ?? [];
+  const { data } = await supabase.from("recipes").select("*").order("repo_owner").order("repo_name");
+  return {
+    recipes: (data as Recipe[]) ?? [],
+    syncedRepoCount,
+    installationCount,
+  };
 }
 
 export default async function RecipesPage() {
   await requireAuth();
-  const recipes = await getRecipes();
+  const { recipes, syncedRepoCount, installationCount } = await getRecipes();
 
   return (
     <div className="space-y-6">
@@ -29,6 +51,12 @@ export default async function RecipesPage() {
         <p className="text-muted-foreground">
           Allowlisted repo policies, command categories, network domains, and CI wiring for each repository workflow.
         </p>
+        {syncedRepoCount != null ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            GitHub App inventory synchronized: {syncedRepoCount} repositories across{" "}
+            {installationCount ?? 0} installation{installationCount === 1 ? "" : "s"}.
+          </p>
+        ) : null}
       </div>
 
       {recipes.length === 0 ? (

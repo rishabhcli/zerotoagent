@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, Geist_Mono } from "next/font/google";
+import { AppAtmosphere } from "@/components/ui/app-atmosphere";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "PatchPilot",
-  description: "Incident-to-PR verified fix agent",
+  description: "Incident-to-PR verified fix agent with approval-gated execution",
 };
 
 export default function RootLayout({
@@ -30,7 +31,8 @@ export default function RootLayout({
       className={`${outfit.variable} ${geistMono.variable} dark`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background font-sans antialiased relative selection:bg-primary/30 selection:text-primary">
+      <body className="relative min-h-screen overflow-x-hidden bg-background font-sans antialiased selection:bg-primary/30 selection:text-primary">
+        <AppAtmosphere />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

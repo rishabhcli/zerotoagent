@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { NewRunForm } from "@/components/runs/new-run-form";
 import { requireAuth } from "@/lib/auth-guard";
+import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
 
 interface RepoOption {
   id: string;
@@ -11,6 +12,17 @@ interface RepoOption {
 }
 
 async function getRepos() {
+  let syncedRepositories: Set<string> | null = null;
+
+  try {
+    const syncSummary = await syncGitHubInstallationRecipes();
+    if (syncSummary.synced) {
+      syncedRepositories = new Set(syncSummary.repositories);
+    }
+  } catch (error) {
+    console.error("[dashboard/new] failed to sync GitHub repositories", error);
+  }
+
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return [];
   }
@@ -29,16 +41,22 @@ async function getRepos() {
     .order("repo_owner")
     .order("repo_name");
 
-  return ((data as RepoOption[]) ?? []).map((repo) => ({
-    id: repo.id,
-    owner: repo.repo_owner,
-    name: repo.repo_name,
-    defaultBranch:
-      typeof repo.metadata?.defaultBranch === "string"
-        ? (repo.metadata.defaultBranch as string)
-        : "main",
-    enabled: repo.enabled,
-  }));
+  return ((data as RepoOption[]) ?? [])
+    .filter((repo) =>
+      syncedRepositories
+        ? syncedRepositories.has(`${repo.repo_owner}/${repo.repo_name}`)
+        : true
+    )
+    .map((repo) => ({
+      id: repo.id,
+      owner: repo.repo_owner,
+      name: repo.repo_name,
+      defaultBranch:
+        typeof repo.metadata?.defaultBranch === "string"
+          ? (repo.metadata.defaultBranch as string)
+          : "main",
+      enabled: repo.enabled,
+    }));
 }
 
 export default async function NewRunPage() {

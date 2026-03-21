@@ -40,3 +40,203 @@ Created intermediate workflow bundle 120ms
  GET /dashboard 200 in 457ms (next.js: 23ms, proxy.ts: 6ms, application-code: 427ms)
  GET /voice 200 in 66ms (next.js: 38ms, proxy.ts: 8ms, application-code: 19ms)
  GET /dashboard/new 200 in 753ms (next.js: 12ms, proxy.ts: 7ms, application-code: 734ms)
+ GET /dashboard 200 in 302ms (next.js: 10ms, proxy.ts: 5ms, application-code: 287ms)
+ GET /dashboard/recipes 200 in 994ms (next.js: 19ms, proxy.ts: 12ms, application-code: 964ms)
+ GET /dashboard/admin 200 in 208ms (next.js: 16ms, proxy.ts: 9ms, application-code: 183ms)
+ GET /dashboard 200 in 298ms (next.js: 12ms, proxy.ts: 8ms, application-code: 277ms)
+ GET /dashboard 200 in 818ms (next.js: 27ms, proxy.ts: 10ms, application-code: 781ms)
+ GET /voice 200 in 43ms (next.js: 14ms, proxy.ts: 9ms, application-code: 20ms)
+ GET / 200 in 100ms (next.js: 16ms, proxy.ts: 7ms, application-code: 77ms)
+ GET / 200 in 51ms (next.js: 8ms, proxy.ts: 5ms, application-code: 38ms)
+ GET / 200 in 49ms (next.js: 10ms, proxy.ts: 6ms, application-code: 33ms)
+⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "127.0.0.1".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['127.0.0.1'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /apple-touch-icon-precomposed.png 404 in 98ms (next.js: 73ms, proxy.ts: 1912µs, application-code: 23ms)
+ GET /apple-touch-icon.png 404 in 26ms (next.js: 4ms, proxy.ts: 2ms, application-code: 20ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132441471 200 in 48ms (next.js: 9ms, proxy.ts: 5ms, application-code: 35ms)
+ GET / 200 in 62ms (next.js: 17ms, proxy.ts: 8ms, application-code: 37ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132441471 200 in 65ms (next.js: 11ms, proxy.ts: 9ms, application-code: 44ms)
+ GET / 200 in 68ms (next.js: 17ms, proxy.ts: 8ms, application-code: 43ms)
+✓ Compiled in 224ms
+Discovering workflow directives 953ms
+Created steps bundle 46ms
+Created intermediate workflow bundle 209ms
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132441471 200 in 75ms (next.js: 20ms, proxy.ts: 8ms, application-code: 47ms)
+✓ Compiled in 163ms
+Discovering workflow directives 843ms
+Created steps bundle 38ms
+Created intermediate workflow bundle 213ms
+ GET / 200 in 73ms (next.js: 16ms, proxy.ts: 11ms, application-code: 46ms)
+✓ Compiled in 83ms
+Discovering workflow directives 803ms
+Created steps bundle 37ms
+Created intermediate workflow bundle 185ms
+✓ Compiled in 93ms
+Discovering workflow directives 864ms
+Created steps bundle 37ms
+Created intermediate workflow bundle 174ms
+ GET / 200 in 85ms (next.js: 17ms, proxy.ts: 9ms, application-code: 58ms)
+✓ Compiled in 65ms
+Discovering workflow directives 1038ms
+Created steps bundle 38ms
+Created intermediate workflow bundle 196ms
+✓ Compiled in 82ms
+Discovering workflow directives 868ms
+Created steps bundle 42ms
+Created intermediate workflow bundle 223ms
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132441471 200 in 57ms (next.js: 12ms, proxy.ts: 6ms, application-code: 40ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132624102 200 in 61ms (next.js: 11ms, proxy.ts: 7ms, application-code: 43ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132625931 200 in 64ms (next.js: 13ms, proxy.ts: 9ms, application-code: 43ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132627881 200 in 63ms (next.js: 13ms, proxy.ts: 8ms, application-code: 42ms)
+✓ Compiled in 88ms
+Discovering workflow directives 855ms
+Created steps bundle 41ms
+Created intermediate workflow bundle 191ms
+ GET / 200 in 66ms (next.js: 17ms, proxy.ts: 14ms, application-code: 35ms)
+Rebuilt steps bundle 55ms
+Rebuilt workflow bundle 246ms
+✓ Compiled in 745ms
+ GET /dashboard 200 in 888ms (next.js: 4ms, proxy.ts: 3ms, application-code: 881ms)
+ GET /dashboard 200 in 773ms (next.js: 259ms, proxy.ts: 37ms, application-code: 476ms)
+ GET /dashboard 200 in 773ms (next.js: 249ms, proxy.ts: 35ms, application-code: 489ms)
+ GET /dashboard 200 in 785ms (next.js: 168ms, proxy.ts: 35ms, application-code: 582ms)
+ GET /dashboard 200 in 861ms (next.js: 269ms, proxy.ts: 37ms, application-code: 555ms)
+ GET /dashboard 200 in 831ms (next.js: 43ms, proxy.ts: 242ms, application-code: 545ms)
+ GET /dashboard 200 in 121ms (next.js: 9ms, proxy.ts: 5ms, application-code: 107ms)
+ GET /dashboard 200 in 131ms (next.js: 18ms, proxy.ts: 4ms, application-code: 108ms)
+ GET /dashboard 200 in 152ms (next.js: 26ms, proxy.ts: 5ms, application-code: 120ms)
+ GET /dashboard 200 in 151ms (next.js: 53ms, proxy.ts: 8ms, application-code: 90ms)
+✓ Compiled in 89ms
+ GET / 200 in 165ms (next.js: 33ms, proxy.ts: 6ms, application-code: 126ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132674894 200 in 62ms (next.js: 11ms, proxy.ts: 5ms, application-code: 46ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132679275 200 in 54ms (next.js: 7ms, proxy.ts: 5ms, application-code: 42ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132683289 200 in 56ms (next.js: 11ms, proxy.ts: 7ms, application-code: 37ms)
+ GET / 200 in 72ms (next.js: 15ms, proxy.ts: 8ms, application-code: 49ms)
+ GET / 200 in 73ms (next.js: 14ms, proxy.ts: 9ms, application-code: 50ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132693368 200 in 65ms (next.js: 12ms, proxy.ts: 8ms, application-code: 46ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132695190 200 in 70ms (next.js: 11ms, proxy.ts: 7ms, application-code: 52ms)
+ GET / 200 in 73ms (next.js: 13ms, proxy.ts: 10ms, application-code: 49ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132706418 200 in 70ms (next.js: 11ms, proxy.ts: 7ms, application-code: 52ms)
+ GET / 200 in 72ms (next.js: 7ms, proxy.ts: 13ms, application-code: 52ms)
+ GET / 200 in 65ms (next.js: 11ms, proxy.ts: 10ms, application-code: 43ms)
+ GET / 200 in 75ms (next.js: 12ms, proxy.ts: 8ms, application-code: 55ms)
+Rebuilt steps bundle 85ms
+✓ Compiled in 135ms
+Rebuilt workflow bundle 636ms
+ GET /dashboard 200 in 899ms (next.js: 247ms, proxy.ts: 37ms, application-code: 615ms)
+ GET /dashboard 200 in 900ms (next.js: 281ms, proxy.ts: 39ms, application-code: 579ms)
+ GET /dashboard 200 in 870ms (next.js: 294ms, proxy.ts: 11ms, application-code: 565ms)
+ GET /dashboard 200 in 905ms (next.js: 160ms, proxy.ts: 33ms, application-code: 712ms)
+ GET /dashboard 200 in 916ms (next.js: 41ms, proxy.ts: 278ms, application-code: 597ms)
+ GET /dashboard 200 in 920ms (next.js: 75ms, proxy.ts: 236ms, application-code: 609ms)
+ GET /dashboard 200 in 186ms (next.js: 6ms, proxy.ts: 4ms, application-code: 176ms)
+ GET /dashboard 200 in 185ms (next.js: 36ms, proxy.ts: 3ms, application-code: 146ms)
+Rebuilt steps bundle 88ms
+✓ Compiled in 105ms
+Rebuilt workflow bundle 633ms
+ GET /dashboard 200 in 934ms (next.js: 214ms, proxy.ts: 33ms, application-code: 687ms)
+ GET /dashboard 200 in 937ms (next.js: 117ms, proxy.ts: 28ms, application-code: 792ms)
+ GET /dashboard 200 in 788ms (next.js: 39ms, proxy.ts: 41ms, application-code: 709ms)
+ GET /dashboard 200 in 988ms (next.js: 42ms, proxy.ts: 214ms, application-code: 732ms)
+ GET /dashboard 200 in 992ms (next.js: 41ms, proxy.ts: 205ms, application-code: 746ms)
+ GET /dashboard 200 in 988ms (next.js: 49ms, proxy.ts: 215ms, application-code: 724ms)
+ GET /dashboard 200 in 229ms (next.js: 6ms, proxy.ts: 3ms, application-code: 220ms)
+ GET /dashboard 200 in 202ms (next.js: 19ms, proxy.ts: 3ms, application-code: 180ms)
+ GET /dashboard 200 in 206ms (next.js: 3ms, proxy.ts: 2ms, application-code: 200ms)
+ GET /dashboard 200 in 288ms (next.js: 37ms, proxy.ts: 2ms, application-code: 249ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132706418 200 in 195ms (next.js: 45ms, proxy.ts: 11ms, application-code: 140ms)
+ GET / 200 in 82ms (next.js: 16ms, proxy.ts: 10ms, application-code: 57ms)
+✓ Compiled in 68ms
+Rebuilt steps bundle 164ms
+Rebuilt workflow bundle 588ms
+ GET /dashboard 200 in 899ms (next.js: 290ms, proxy.ts: 46ms, application-code: 563ms)
+ GET /dashboard 200 in 902ms (next.js: 181ms, proxy.ts: 35ms, application-code: 686ms)
+ GET /dashboard 200 in 901ms (next.js: 268ms, proxy.ts: 40ms, application-code: 593ms)
+ GET /dashboard 200 in 901ms (next.js: 281ms, proxy.ts: 44ms, application-code: 576ms)
+ GET /dashboard 200 in 863ms (next.js: 50ms, proxy.ts: 261ms, application-code: 552ms)
+ GET /dashboard 200 in 862ms (next.js: 59ms, proxy.ts: 261ms, application-code: 543ms)
+ GET /dashboard 200 in 114ms (next.js: 3ms, proxy.ts: 3ms, application-code: 108ms)
+ GET /dashboard 200 in 134ms (next.js: 17ms, proxy.ts: 2ms, application-code: 114ms)
+ GET /dashboard 200 in 135ms (next.js: 26ms, proxy.ts: 2ms, application-code: 106ms)
+ GET / 200 in 214ms (next.js: 43ms, proxy.ts: 17ms, application-code: 154ms)
+Rebuilt steps bundle 103ms
+✓ Compiled in 218ms
+Rebuilt workflow bundle 713ms
+ GET /dashboard 200 in 671ms (next.js: 293ms, proxy.ts: 15ms, application-code: 363ms)
+ GET /dashboard 200 in 712ms (next.js: 189ms, proxy.ts: 38ms, application-code: 486ms)
+ GET /dashboard 200 in 680ms (next.js: 56ms, proxy.ts: 260ms, application-code: 363ms)
+ GET /dashboard 200 in 787ms (next.js: 282ms, proxy.ts: 45ms, application-code: 460ms)
+ GET /dashboard 200 in 792ms (next.js: 270ms, proxy.ts: 41ms, application-code: 481ms)
+ GET /dashboard 200 in 747ms (next.js: 47ms, proxy.ts: 278ms, application-code: 422ms)
+ GET /dashboard 200 in 276ms (next.js: 12ms, proxy.ts: 4ms, application-code: 260ms)
+ GET /dashboard 200 in 277ms (next.js: 2ms, proxy.ts: 4ms, application-code: 271ms)
+ GET /dashboard 200 in 275ms (next.js: 37ms, proxy.ts: 3ms, application-code: 235ms)
+ GET /dashboard 200 in 204ms (next.js: 21ms, proxy.ts: 19ms, application-code: 164ms)
+ GET /dashboard 200 in 208ms (next.js: 25ms, proxy.ts: 5ms, application-code: 178ms)
+ GET /dashboard 200 in 212ms (next.js: 4ms, proxy.ts: 6ms, application-code: 203ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132706418 200 in 259ms (next.js: 33ms, proxy.ts: 8ms, application-code: 218ms)
+Rebuilt steps bundle 99ms
+Rebuilt workflow bundle 255ms
+ GET / 200 in 55ms (next.js: 9ms, proxy.ts: 4ms, application-code: 43ms)
+✓ Compiled in 127ms
+Rebuilt steps bundle 184ms
+Rebuilt workflow bundle 704ms
+ GET /dashboard 200 in 868ms (next.js: 4ms, proxy.ts: 2ms, application-code: 862ms)
+ GET /dashboard 200 in 447ms (next.js: 24ms, proxy.ts: 24ms, application-code: 400ms)
+ GET /dashboard 200 in 449ms (next.js: 13ms, proxy.ts: 24ms, application-code: 412ms)
+ GET /dashboard 200 in 780ms (next.js: 213ms, proxy.ts: 40ms, application-code: 526ms)
+ GET /dashboard 200 in 514ms (next.js: 52ms, proxy.ts: 12ms, application-code: 450ms)
+ GET /dashboard 200 in 518ms (next.js: 41ms, proxy.ts: 12ms, application-code: 464ms)
+ GET /dashboard 200 in 128ms (next.js: 16ms, proxy.ts: 6ms, application-code: 105ms)
+ GET /dashboard 200 in 156ms (next.js: 31ms, proxy.ts: 13ms, application-code: 112ms)
+ GET /dashboard 200 in 168ms (next.js: 50ms, proxy.ts: 16ms, application-code: 102ms)
+ GET /dashboard 200 in 389ms (next.js: 2ms, proxy.ts: 1744µs, application-code: 385ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132706418 200 in 301ms (next.js: 33ms, proxy.ts: 9ms, application-code: 259ms)
+ GET / 200 in 74ms (next.js: 14ms, proxy.ts: 12ms, application-code: 47ms)
+Rebuilt steps bundle 82ms
+✓ Compiled in 114ms
+Rebuilt workflow bundle 837ms
+ GET /dashboard 200 in 920ms (next.js: 355ms, proxy.ts: 48ms, application-code: 517ms)
+ GET /dashboard 200 in 921ms (next.js: 253ms, proxy.ts: 46ms, application-code: 622ms)
+ GET /dashboard 200 in 920ms (next.js: 370ms, proxy.ts: 53ms, application-code: 497ms)
+ GET /dashboard 200 in 1017ms (next.js: 385ms, proxy.ts: 55ms, application-code: 578ms)
+ GET /dashboard 200 in 972ms (next.js: 64ms, proxy.ts: 346ms, application-code: 562ms)
+ GET /dashboard 200 in 971ms (next.js: 74ms, proxy.ts: 346ms, application-code: 551ms)
+ GET /dashboard 200 in 147ms (next.js: 52ms, proxy.ts: 3ms, application-code: 93ms)
+ GET /dashboard 200 in 285ms (next.js: 51ms, proxy.ts: 16ms, application-code: 217ms)
+ GET /dashboard 200 in 285ms (next.js: 41ms, proxy.ts: 39ms, application-code: 205ms)
+ GET /dashboard 200 in 205ms (next.js: 5ms, proxy.ts: 3ms, application-code: 198ms)
+✓ Compiled in 86ms
+ GET / 200 in 244ms (next.js: 42ms, proxy.ts: 5ms, application-code: 198ms)
+ GET / 200 in 79ms (next.js: 12ms, proxy.ts: 9ms, application-code: 58ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132955911 200 in 74ms (next.js: 11ms, proxy.ts: 7ms, application-code: 56ms)
+ GET / 200 in 61ms (next.js: 8ms, proxy.ts: 6ms, application-code: 48ms)
+ GET / 200 in 61ms (next.js: 8ms, proxy.ts: 7ms, application-code: 46ms)
+ GET / 200 in 70ms (next.js: 10ms, proxy.ts: 6ms, application-code: 53ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132966565 200 in 80ms (next.js: 10ms, proxy.ts: 7ms, application-code: 63ms)
+ GET / 200 in 76ms (next.js: 12ms, proxy.ts: 7ms, application-code: 57ms)
+ GET / 200 in 89ms (next.js: 17ms, proxy.ts: 7ms, application-code: 65ms)
+ GET /apple-touch-icon-precomposed.png 404 in 98ms (next.js: 38ms, proxy.ts: 8ms, application-code: 52ms)
+ GET /apple-touch-icon.png 404 in 94ms (next.js: 57ms, proxy.ts: 14ms, application-code: 22ms)
+ GET / 200 in 64ms (next.js: 8ms, proxy.ts: 5ms, application-code: 51ms)
+ GET / 200 in 66ms (next.js: 15ms, proxy.ts: 5ms, application-code: 46ms)
+ GET / 200 in 71ms (next.js: 10ms, proxy.ts: 6ms, application-code: 55ms)
+ GET /apple-touch-icon-precomposed.png 404 in 83ms (next.js: 22ms, proxy.ts: 13ms, application-code: 49ms)
+ GET /apple-touch-icon.png 404 in 82ms (next.js: 37ms, proxy.ts: 17ms, application-code: 27ms)
+ GET / 200 in 68ms (next.js: 6ms, proxy.ts: 4ms, application-code: 58ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774132966565 200 in 72ms (next.js: 10ms, proxy.ts: 8ms, application-code: 54ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774133072964 200 in 64ms (next.js: 9ms, proxy.ts: 7ms, application-code: 47ms)
+ GET / 200 in 66ms (next.js: 12ms, proxy.ts: 7ms, application-code: 47ms)
+ GET /?id=187ef602-7947-4759-aff4-4bcae0638a85&vscodeBrowserReqId=1774133072964 200 in 77ms (next.js: 12ms, proxy.ts: 8ms, application-code: 58ms)
+ GET / 307 in 610ms (next.js: 10ms, proxy.ts: 7ms, application-code: 592ms)
+ GET /dashboard 200 in 464ms (next.js: 5ms, proxy.ts: 2ms, application-code: 456ms)
+ GET /dashboard/new 200 in 807ms (next.js: 51ms, proxy.ts: 9ms, application-code: 747ms)
