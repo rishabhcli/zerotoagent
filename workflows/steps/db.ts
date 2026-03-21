@@ -17,6 +17,7 @@ import type {
 } from "@/lib/patchpilot/contracts";
 import { getSupabaseAdmin } from "@/lib/patchpilot/supabase";
 import { redactUnknown } from "@/lib/patchpilot/redaction";
+import { upsertRunRecordRow } from "@/lib/patchpilot/upsert-run-record";
 
 async function getSupabase() {
   return getSupabaseAdmin();
@@ -57,21 +58,7 @@ export async function createRunRecord(input: {
 }) {
   "use step";
   console.log(`[db] createRunRecord: ${input.runId}`);
-  const supabase = await getSupabase();
-  if (!supabase) return;
-  await supabase.from("runs").upsert({
-    id: input.runId,
-    repo_owner: input.repoOwner,
-    repo_name: input.repoName,
-    base_branch: input.defaultBranch,
-    status: "running",
-    source: input.source,
-    mode: input.mode,
-    environment: input.environment,
-    workflow_input: redactUnknown(input.workflowInput),
-    thread_context: redactUnknown(input.threadContext ?? {}),
-    voice_context: redactUnknown(input.voiceContext ?? {}),
-  }, { onConflict: "id" });
+  await upsertRunRecordRow(input);
 }
 
 export async function updateRunRecord(input: {

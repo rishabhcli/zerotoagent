@@ -6,15 +6,22 @@
   "keywords": [
     "agentic-devops",
     "incident-response",
+    "incident-to-pr",
     "software-reliability",
+    "reliability-engineering",
     "autonomous-remediation",
+    "autonomous-debugging",
     "verification-first",
     "human-in-the-loop",
     "multimodal-debugging",
+    "multimodal-agents",
     "approval-gated",
     "observability",
+    "agent-observability",
     "replayable-verification",
     "audit-trail",
+    "devtools",
+    "ai-ops",
     "hackathon"
   ],
   "scripts": {

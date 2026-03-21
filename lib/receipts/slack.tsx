@@ -10,15 +10,21 @@ export function runStartedCard(opts: {
   traceUrl?: string;
 }) {
   return Card({
-    title: "RePro — Run Started",
+    title: "RePro — Verification-First Run Started",
     children: [
       CardText(`Run ID: \`${opts.runId}\``),
       CardText(`Repo: ${opts.repo}`),
+      CardText("Closed-loop remediation is in progress with sandbox verification, approval gating, and audit-grade receipts."),
       ...(opts.mode ? [CardText(`Mode: ${opts.mode.replace("_", " ")}`)] : []),
       ...(opts.environment ? [CardText(`Environment: ${opts.environment}`)] : []),
       Divider(),
       CardText("What I understood", { style: "bold" }),
       CardText(opts.summary.slice(0, 300)),
+      Divider(),
+      CardText("Why this matters", { style: "bold" }),
+      CardText(
+        "This run is designed to produce reproducible proof and an accountable decision trail, not just a suggested fix."
+      ),
       ...(opts.nextSteps && opts.nextSteps.length > 0
         ? [
             Divider(),
@@ -48,6 +54,9 @@ export function stepProgressCard(opts: {
     title: `Step: ${opts.stepName}`,
     children: [
       CardText(opts.description),
+      CardText("Run Trace remains the live source of truth for proof, receipts, and approvals.", {
+        style: "muted",
+      }),
       CardText(`Run: \`${opts.runId}\``, { style: "muted" }),
     ],
   });
@@ -65,10 +74,14 @@ export function approvalRequestCard(opts: {
   traceUrl?: string;
 }) {
   return Card({
-    title: "Approval Required: Open PR?",
+    title: "Approval Required: Verified PR Ready",
     children: [
       CardText("What RePro wants to do:", { style: "bold" }),
       CardText(opts.prTitle ?? "Open a pull request for the verified patch."),
+      CardText(
+        "Approval-gated autonomy is active: no PR opens until an approver confirms the sandbox-verified patch.",
+        { style: "muted" }
+      ),
       Divider(),
       Fields([
         Field({ label: "Tests", value: opts.testSummary }),
@@ -97,16 +110,21 @@ export function finalReceiptCard(opts: {
   traceUrl?: string;
 }) {
   return Card({
-    title: opts.prUrl ? "RePro — PR Created" : "RePro — Run Complete",
+    title: opts.prUrl ? "RePro — Verified PR Created" : "RePro — Verified Run Complete",
     children: [
       ...(opts.prNumber != null ? [CardText(`PR: #${opts.prNumber}`, { style: "bold" })] : []),
       CardText(opts.summary.slice(0, 300)),
+      CardText(
+        "Outcome: verification-first remediation completed with an auditable trail and reusable operational proof.",
+        { style: "muted" }
+      ),
       Divider(),
       Fields([
         ...(opts.testCount ? [Field({ label: "Tests", value: opts.testCount })] : []),
         ...(opts.confidence != null
           ? [Field({ label: "Confidence", value: `${opts.confidence}/100` })]
           : []),
+        Field({ label: "Proof", value: "Replayable receipts + trace" }),
         Field({ label: "Run ID", value: `\`${opts.runId}\`` }),
       ]),
       ...(opts.prUrl ? [LinkButton({ url: opts.prUrl, label: "View PR" })] : []),
@@ -127,6 +145,9 @@ export function runFailedCard(opts: {
     children: [
       CardText(`Run \`${opts.runId}\` failed.`),
       CardText(opts.reason.slice(0, 500)),
+      CardText("The workflow stopped safely before any unapproved high-impact action.", {
+        style: "muted",
+      }),
       ...(opts.remediation && opts.remediation.length > 0
         ? [
             Divider(),

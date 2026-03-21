@@ -5,6 +5,7 @@ import { RunStartPayloadSchema } from "@/lib/patchpilot/contracts";
 import { requireRepoPolicy } from "@/lib/patchpilot/policy";
 import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
 import { createReProRunId } from "@/lib/patchpilot/run-id";
+import { upsertRunRecordRow } from "@/lib/patchpilot/upsert-run-record";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -43,6 +44,19 @@ export async function POST(request: Request) {
     ...parsed.data,
     runId,
   };
+
+  await upsertRunRecordRow({
+    runId,
+    repoOwner: input.repo.owner,
+    repoName: input.repo.name,
+    defaultBranch: input.repo.defaultBranch,
+    source: input.source,
+    mode: input.mode,
+    environment: input.environment,
+    workflowInput: input,
+    threadContext: input.threadContext,
+    voiceContext: input.voiceContext,
+  });
 
   const run = await start(patchPilotIncidentToPR, [input]);
 

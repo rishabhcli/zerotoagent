@@ -97,7 +97,7 @@ function buildMessage(
       return stepProgressCard({
         runId,
         stepName: "Policy Resolved",
-        description: `Repo allowlist and sandbox policy loaded successfully.`,
+        description: `Repo allowlist and sandbox policy loaded successfully. Trust and safety constraints are active.`,
       });
 
     case "repo.focus":
@@ -113,8 +113,8 @@ function buildMessage(
         stepName: "Reproduction Attempt",
         description:
           data?.reproduced === true
-            ? "Issue reproduced in the sandbox."
-            : "Issue was not reproducible in the sandbox.",
+            ? "Issue reproduced in the sandbox. RePro now has concrete proof to patch against."
+            : "Issue was not reproducible in the sandbox, so the workflow stopped short of unsafe guesswork.",
       });
 
     case "verification.completed": {
@@ -124,10 +124,10 @@ function buildMessage(
         stepName: "Verification Complete",
         description:
           status === "pass"
-            ? "Sandbox verification passed."
+            ? "Sandbox verification passed with reproducible proof."
             : status === "flaky"
-              ? "Verification was flaky across retries."
-              : "Sandbox verification failed.",
+              ? "Verification was flaky across retries, so confidence is reduced transparently."
+              : "Sandbox verification failed, so no unapproved shipping action will be taken.",
       });
     }
 
@@ -153,8 +153,8 @@ function buildMessage(
         stepName: "Approval",
         description:
           data?.approved === true
-            ? "An approver authorized PR creation."
-            : "PR creation was rejected and the run stopped safely.",
+            ? "An approver authorized PR creation after verification evidence was reviewed."
+            : "PR creation was rejected and the run stopped safely with full receipts preserved.",
       });
 
     case "pr.created":
@@ -162,7 +162,7 @@ function buildMessage(
         runId,
         prUrl: (data?.prUrl as string) ?? "#",
         prNumber: (data?.prNumber as number) ?? 0,
-        summary: "Verified fix applied and PR opened.",
+        summary: "Verified fix applied and PR opened with an auditable trail, replayable proof, and approval-aware execution.",
         receiptUrl,
         traceUrl,
       });
@@ -178,14 +178,15 @@ function buildMessage(
       return stepProgressCard({
         runId,
         stepName: "Receipts Ready",
-        description: "Receipt bundle is available for download from the run trace.",
+        description: "Audit-grade receipt bundle is available for download from the run trace.",
       });
 
     case "run.completed":
       return finalReceiptCard({
         runId,
         prUrl: (data?.prUrl as string) ?? undefined,
-        summary: "Run completed with full receipts and audit trail.",
+        summary:
+          "Closed-loop remediation completed with full receipts, audit trail, and reusable operational proof.",
         receiptUrl,
         traceUrl,
       });

@@ -10,6 +10,41 @@ It turns messy incident evidence (screenshots, logs, PDFs, stack traces) into a 
 
 The core loop: **ingest → triage → sandbox reproduce → patch → verify → approval gate → open PR → receipt**
 
+## Judge-facing positioning
+
+When describing the product externally, frame it as a **verification-first software reliability system**, not a coding chatbot. The strongest language is:
+
+- **Closed-loop remediation** instead of "bug analysis"
+- **Approval-gated autonomy** instead of "autonomous coding"
+- **Replayable proof** instead of "AI-generated suggestion"
+- **Audit-grade receipts** instead of "logs"
+- **Operational memory** instead of "run history"
+- **Artifact-native multimodal debugging** instead of "chat input"
+
+### Why it has impact potential
+
+- Repeated incidents become reusable operational knowledge instead of one-off heroics.
+- The same workflow can serve SRE, support, QA, platform engineering, release engineering, and internal developer tooling.
+- Trust primitives such as allowlists, approval gates, sandbox isolation, and receipts make the system credible beyond a demo.
+- The product can expand naturally into multi-repo remediation, CI orchestration, rollback planning, flaky-test investigation, and voice-triggered incident response.
+
+### Why it feels original
+
+- It starts from messy evidence like screenshots, PDFs, logs, and voice notes rather than ideal developer prompts.
+- It treats observability as a first-class user experience, not an internal debugging layer.
+- It optimizes for reproducible proof, not theatrical code generation.
+- It makes human approval part of the core product design, which turns risky automation into accountable operations.
+
+### Live demo language
+
+Use phrases like:
+
+- "This is not a diagnosis bot; it is a closed-loop remediation system."
+- "The proof is visible live: reproduce, patch, verify, approve, and ship."
+- "Every risky action is either sandboxed or approval-gated."
+- "The Run Trace is the trust layer."
+- "RePro leaves behind reusable operational memory, not just a chat transcript."
+
 ---
 
 ## Tech stack

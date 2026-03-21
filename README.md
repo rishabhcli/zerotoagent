@@ -117,3 +117,5 @@ Every run is linked to a Sentry trace by Run ID. The admin console shows searcha
 - [`overview.md`](overview.md) — full product spec and UX flows
 - [`deep-research-report-shallow.md`](deep-research-report-shallow.md) — hackathon strategy and winning wedge
 - [`deep-research-report-deep.md`](deep-research-report-deep.md) — architecture blueprint, tech stack mapping, and implementation plan
+- [`docs/judging-narrative.md`](docs/judging-narrative.md) — rubric-focused positioning for impact, demo strength, and originality
+- [`docs/phrase-bank.md`](docs/phrase-bank.md) — reusable high-signal phrases for submissions, demos, and receipts

@@ -2,6 +2,7 @@ import { start } from "workflow/api";
 import { patchPilotIncidentToPR } from "@/workflows/patchpilot";
 import { createReProRunId } from "@/lib/patchpilot/run-id";
 import { getSupabaseAdmin } from "@/lib/patchpilot/supabase";
+import { upsertRunRecordRow } from "@/lib/patchpilot/upsert-run-record";
 import type { ReProWorkflowInput } from "@/workflows/patchpilot";
 
 export async function POST(
@@ -38,6 +39,19 @@ export async function POST(
     mode: "dry_run",
     replayOfRunId: runId,
   } satisfies ReProWorkflowInput;
+
+  await upsertRunRecordRow({
+    runId: workflowInput.runId,
+    repoOwner: workflowInput.repo.owner,
+    repoName: workflowInput.repo.name,
+    defaultBranch: workflowInput.repo.defaultBranch,
+    source: workflowInput.source,
+    mode: workflowInput.mode,
+    environment: workflowInput.environment,
+    workflowInput,
+    threadContext: workflowInput.threadContext,
+    voiceContext: workflowInput.voiceContext,
+  });
 
   const workflowRun = await start(patchPilotIncidentToPR, [workflowInput]);
 
