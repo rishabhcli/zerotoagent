@@ -46,7 +46,7 @@ export function RunListTable({ runs }: { runs: Run[] }) {
       </TableHeader>
       <TableBody>
         {runs.map((run) => (
-          <TableRow key={run.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+          <TableRow key={run.id} className="border-b border-white/[0.08] hover:bg-white/[0.04] transition-colors group">
             <TableCell className="py-4">
               <RunStatusBadge status={run.status} />
             </TableCell>

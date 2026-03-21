@@ -117,7 +117,7 @@ export default function VoicePage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-6">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-2xl liquid-glass !rounded-[32px] border-0">
         <CardHeader>
           <CardTitle className="text-2xl">Call PatchPilot</CardTitle>
           <p className="text-muted-foreground">

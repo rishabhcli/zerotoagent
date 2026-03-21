@@ -43,14 +43,14 @@ export function UserMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-[20px] border border-white/10 bg-card/90 p-4 shadow-xl backdrop-blur-2xl">
+          <div className="absolute right-0 top-full z-50 mt-2 w-64 liquid-glass !rounded-[20px] p-4">
             <div className="mb-3 space-y-1">
               <p className="text-sm font-medium">{name}</p>
               <p className="text-xs text-muted-foreground">{email}</p>
               <p className="text-xs capitalize text-primary">{role}</p>
             </div>
             <button
-              onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.href = "/" } })}
+              onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/"; } } })}
               className="flex w-full items-center gap-2 rounded-[12px] px-3 py-2 text-sm text-muted-foreground transition hover:bg-white/[0.06] hover:text-foreground"
             >
               <LogOut className="size-3.5" />

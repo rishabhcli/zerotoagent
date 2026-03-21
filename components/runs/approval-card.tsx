@@ -42,7 +42,7 @@ export function ApprovalCard({
   };
 
   return (
-    <Card className="border-amber-500/30">
+    <Card className="liquid-glass !rounded-[24px] !border-amber-400/20">
       <CardHeader>
         <CardTitle className="text-lg">Approval Required</CardTitle>
       </CardHeader>

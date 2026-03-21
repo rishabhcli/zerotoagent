@@ -46,14 +46,22 @@ function getGitHubSocialProviders() {
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       scope: [...githubOAuthScopes],
+      redirectURI: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/auth/callback/github`,
       // Fetch email from GitHub API when profile email is private
-      async getUserInfo(token: { accessToken: string }) {
+      async getUserInfo(token: { accessToken?: string }) {
+        if (!token.accessToken) return null as any;
         const [userRes, emailsRes] = await Promise.all([
           fetch("https://api.github.com/user", {
-            headers: { Authorization: `Bearer ${token.accessToken}` },
+            headers: { 
+              Authorization: `Bearer ${token.accessToken}`,
+              "User-Agent": "better-auth",
+            },
           }),
           fetch("https://api.github.com/user/emails", {
-            headers: { Authorization: `Bearer ${token.accessToken}` },
+            headers: { 
+              Authorization: `Bearer ${token.accessToken}`,
+              "User-Agent": "better-auth",
+            },
           }),
         ]);
         const user = await userRes.json();
@@ -83,7 +91,7 @@ function createAuth() {
       "http://localhost:3000",
     secret: process.env.BETTER_AUTH_SECRET,
     database: new (require("pg").Pool)({
-      connectionString: process.env.POSTGRES_URL!,
+      connectionString: process.env.POSTGRES_URL?.replace("?sslmode=require", ""),
       ssl: { rejectUnauthorized: false },
     }),
     socialProviders: getGitHubSocialProviders(),

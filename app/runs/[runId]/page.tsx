@@ -162,7 +162,7 @@ export default async function RunDetailPage({
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Patch Confidence</CardTitle>
           </CardHeader>
@@ -170,7 +170,7 @@ export default async function RunDetailPage({
             {run.confidence_score != null ? `${run.confidence_score}/100` : "—"}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Reproducibility</CardTitle>
           </CardHeader>
@@ -178,7 +178,7 @@ export default async function RunDetailPage({
             {run.reproducibility_score != null ? `${run.reproducibility_score}/100` : "—"}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Observability</CardTitle>
           </CardHeader>
@@ -186,7 +186,7 @@ export default async function RunDetailPage({
             {run.observability_coverage != null ? `${run.observability_coverage}%` : "—"}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Trace ID</CardTitle>
           </CardHeader>
@@ -197,7 +197,7 @@ export default async function RunDetailPage({
       </div>
 
       {run.outcome_summary ? (
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-lg">Outcome Summary</CardTitle>
           </CardHeader>
@@ -230,7 +230,7 @@ export default async function RunDetailPage({
 
       {/* PR link */}
       {pr && (
-        <Card className="border-green-500/30">
+        <Card className="liquid-glass !rounded-[24px] border-green-400/20">
           <CardHeader>
             <CardTitle className="text-lg">Pull Request</CardTitle>
           </CardHeader>
@@ -248,7 +248,7 @@ export default async function RunDetailPage({
       )}
 
       {ci && (
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-lg">GitHub Actions</CardTitle>
           </CardHeader>
@@ -274,7 +274,7 @@ export default async function RunDetailPage({
 
       {/* Patch preview */}
       {patch && (
-        <Card>
+        <Card className="liquid-glass !rounded-[24px] border-0">
           <CardHeader>
             <CardTitle className="text-lg">Patch</CardTitle>
           </CardHeader>

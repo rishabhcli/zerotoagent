@@ -1,0 +1,42 @@
+
+> zerotoagent@0.1.0 dev /Users/rishabhbansal/Documents/GitHub/zerotoagent
+> next dev
+
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.1.60.243:3000
+- Environments: .env.local
+✓ Ready in 212ms
+Discovering workflow directives 487ms
+Created steps bundle 35ms
+Created intermediate workflow bundle 141ms
+Creating webhook route
+Creating manifest...
+Created manifest with 20 steps, 1 workflow, and 3 classes 271ms
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/rishabhbansal/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/rishabhbansal/Documents/GitHub/zerotoagent/pnpm-workspace.yaml
+
+
+Discovering workflow directives 991ms
+Created steps bundle 30ms
+Created intermediate workflow bundle 120ms
+ GET /dashboard 200 in 2.1s (next.js: 116ms, proxy.ts: 100ms, application-code: 1842ms)
+ GET / 307 in 186ms (next.js: 34ms, proxy.ts: 9ms, application-code: 143ms)
+ GET /dashboard 200 in 536ms (next.js: 3ms, proxy.ts: 2ms, application-code: 530ms)
+ GET /dashboard/new 200 in 392ms (next.js: 44ms, proxy.ts: 9ms, application-code: 339ms)
+ GET /dashboard/recipes 200 in 338ms (next.js: 53ms, proxy.ts: 10ms, application-code: 276ms)
+ GET /dashboard/admin 200 in 131ms (next.js: 29ms, proxy.ts: 9ms, application-code: 93ms)
+ GET /dashboard 200 in 256ms (next.js: 3ms, proxy.ts: 4ms, application-code: 250ms)
+ GET /dashboard 200 in 22ms (next.js: 8ms, proxy.ts: 7ms, application-code: 7ms)
+ GET /dashboard 200 in 625ms (next.js: 21ms, proxy.ts: 3ms, application-code: 601ms)
+ GET /dashboard 200 in 277ms (next.js: 5ms, proxy.ts: 5ms, application-code: 267ms)
+ GET /dashboard/new 200 in 370ms (next.js: 14ms, proxy.ts: 10ms, application-code: 346ms)
+ GET /dashboard/admin 200 in 129ms (next.js: 6ms, proxy.ts: 7ms, application-code: 116ms)
+ GET /dashboard 200 in 270ms (next.js: 9ms, proxy.ts: 7ms, application-code: 254ms)
+ GET /dashboard 200 in 457ms (next.js: 23ms, proxy.ts: 6ms, application-code: 427ms)
+ GET /voice 200 in 66ms (next.js: 38ms, proxy.ts: 8ms, application-code: 19ms)
+ GET /dashboard/new 200 in 753ms (next.js: 12ms, proxy.ts: 7ms, application-code: 734ms)

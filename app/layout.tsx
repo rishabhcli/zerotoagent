@@ -31,7 +31,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background font-sans antialiased relative selection:bg-primary/30 selection:text-primary">
-        <div className="absolute inset-0 bg-mesh-pattern pointer-events-none -z-10" />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

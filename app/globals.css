@@ -73,7 +73,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.75rem;
+  --radius: 1.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.45 0.15 160);
@@ -134,25 +134,28 @@
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-background/40 backdrop-blur-xl border border-white/10 shadow-lg supports-[backdrop-filter]:bg-background/40;
+  .liquid-glass {
+    @apply bg-white/[0.08] backdrop-blur-2xl backdrop-saturate-150
+           border border-white/[0.12]
+           shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)];
+    corner-shape: squircle;
   }
-  .glass-card {
-    @apply bg-card/60 backdrop-blur-lg border border-white/10 shadow-xl transition-all hover:bg-card/80;
+  .liquid-glass-subtle {
+    @apply bg-white/[0.05] backdrop-blur-xl backdrop-saturate-[130%]
+           border border-white/[0.08]
+           shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)];
+    corner-shape: squircle;
+  }
+  .liquid-glass-active {
+    @apply bg-white/[0.14] backdrop-blur-2xl backdrop-saturate-150
+           border border-white/[0.18]
+           shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)];
+    corner-shape: squircle;
   }
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent-foreground;
   }
   .text-gradient-alt {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400;
-  }
-  .bg-mesh-pattern {
-    background-image: radial-gradient(at 0% 0%, hsla(280, 100%, 70%, 0.1) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(260, 100%, 65%, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(240, 100%, 60%, 0.1) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(220, 100%, 55%, 0.15) 0px, transparent 50%);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
   }
 }
