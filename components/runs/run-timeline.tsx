@@ -53,11 +53,30 @@ export function RunTimeline({
 }) {
   const { events, steps } = useRunTrace(runId, initialEvents, initialSteps);
 
+  const statusIcon = (status: string) => {
+    switch (status) {
+      case "completed": return "✅";
+      case "failed": return "❌";
+      case "running": return "⏳";
+      case "blocked": return "⚠️";
+      case "skipped": return "⏭️";
+      default: return "○";
+    }
+  };
+
   if (events.length === 0 && steps.length === 0) {
     return (
-      <p className="text-muted-foreground text-sm">No events yet.</p>
+      <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-8 text-center">
+        <p className="text-muted-foreground text-sm">No events yet. The run trace will appear here once the workflow begins executing.</p>
+      </div>
     );
   }
+
+  const sortedSteps = [...steps].sort((left, right) => {
+    const leftTimestamp = new Date(left.started_at).getTime();
+    const rightTimestamp = new Date(right.started_at).getTime();
+    return leftTimestamp - rightTimestamp;
+  });
 
   return (
     <div className="space-y-8">
@@ -65,22 +84,17 @@ export function RunTimeline({
         <div>
           <h3 className="text-base font-semibold">Step Timeline</h3>
           <p className="text-sm text-muted-foreground">
-            What RePro decided, what it ran, and what happens next.
+            What RePro decided, what it ran, and what happens next. ({steps.length} step{steps.length !== 1 ? "s" : ""} recorded)
           </p>
         </div>
         <Accordion className="space-y-3">
-          {[...steps]
-            .sort((left, right) => {
-              const leftTimestamp = new Date(left.started_at).getTime();
-              const rightTimestamp = new Date(right.started_at).getTime();
-              return leftTimestamp - rightTimestamp;
-            })
-            .map((step) => (
+          {sortedSteps.map((step) => (
             <AccordionItem key={step.id} value={step.id} className="rounded-2xl border border-border/60 bg-card/60 px-4">
               <AccordionTrigger className="py-4 hover:no-underline">
                 <div className="flex w-full flex-col gap-3 text-left sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="flex items-center gap-3">
+                      <span className="text-base" aria-hidden="true">{statusIcon(step.status)}</span>
                       <span className="font-medium">
                         {step.title || RUN_STEP_TITLES[step.step_type] || step.step_type}
                       </span>

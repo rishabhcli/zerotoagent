@@ -13,17 +13,17 @@ import { cn } from "@/lib/utils";
 const features = [
   {
     icon: Eye,
-    title: "Evidence, not vibes",
+    title: "Full run observability",
     description:
-      "Artifacts, diff, approval state, and CI stay in one trace.",
+      "Every step — sandbox creation, reproduction, patch, verification, approval, and PR push — emits structured events in one trace.",
     detail: "run events • artifacts • receipts",
     className: "lg:col-span-2 lg:row-span-2",
     variant: "hero-panel" as const,
   },
   {
     icon: Lock,
-    title: "Sandboxed execution",
-    description: "Reproduce and verify before any PR exists.",
+    title: "Disposable sandboxes",
+    description: "Each run spins up an isolated environment. Reproduce and verify without touching your infra.",
     detail: "sandbox.created",
     className: "",
     variant: "card" as const,
@@ -31,7 +31,7 @@ const features = [
   {
     icon: Shield,
     title: "Repo-scoped policy",
-    description: "Allowed repos, domains, and commands stay visible.",
+    description: "Only allowlisted repos can receive PRs. Guardrails stay visible.",
     detail: "repo.policy_resolved",
     className: "",
     variant: "quiet-panel" as const,
@@ -46,17 +46,17 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Fast when it’s obvious",
-    description: "Clear incidents move in minutes.",
+    title: "Sandbox to PR in minutes",
+    description: "Sandbox spins up, fix is verified, and PR is pushed — median 4 minutes end to end.",
     detail: "median 4 min",
     className: "",
     variant: "quiet-panel" as const,
   },
   {
     icon: Sparkles,
-    title: "Human approval before output",
-    description: "Automation works. People release the code.",
-    detail: "approval.requested",
+    title: "Approval gates the PR push",
+    description: "The PR is only created and pushed after a human approves the verified fix.",
+    detail: "approval.resolved → pr.created",
     className: "",
     variant: "quiet-panel" as const,
   },
@@ -68,10 +68,10 @@ export function FeaturesSection() {
       <div className="mb-12 max-w-3xl space-y-4">
         <p className="section-kicker">Capabilities</p>
         <h2 className="display-section text-foreground">
-          Calm surfaces. Clear proof.
+          Sandbox isolation. Clear proof. PR delivery.
         </h2>
         <p className="body-lead max-w-2xl">
-          The landing page and app shell now share one material language.
+          Every capability is designed around one flow: sandbox → verify → approve → push.
         </p>
       </div>
 

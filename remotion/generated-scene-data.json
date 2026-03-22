@@ -1,0 +1,146 @@
+[
+  {
+    "id": "landing",
+    "kicker": "Verification-First",
+    "title": "Incidents do not arrive as clean bug reports.",
+    "body": "RePro turns screenshots, logs, PDFs, stack traces, and pressure into a verified, approval-gated pull request with readable proof.",
+    "bullets": [
+      "Messy evidence in",
+      "Verified patch out",
+      "Humans stay in control"
+    ],
+    "screenshot": "landing.png",
+    "audioSrc": "demo-video/audio/01-landing.mp3",
+    "durationInFrames": 435,
+    "accentFrom": "#66d9ff",
+    "accentTo": "#5f7dff"
+  },
+  {
+    "id": "dashboard",
+    "kicker": "Operator Control Plane",
+    "title": "The dashboard keeps live work legible.",
+    "body": "Runs, approvals, confidence, and recent activity stay in one control surface so teams can see what the system is doing and what happens next.",
+    "bullets": [
+      "Active queue",
+      "Approval state",
+      "Recent activity"
+    ],
+    "screenshot": "dashboard.png",
+    "audioSrc": "demo-video/audio/02-dashboard.mp3",
+    "durationInFrames": 384,
+    "accentFrom": "#63f5d1",
+    "accentTo": "#0ea5e9"
+  },
+  {
+    "id": "new-run",
+    "kicker": "Structured Intake",
+    "title": "Starting a run is structured, not magical.",
+    "body": "Operators choose an allowlisted repository, add incident context, and decide whether to stop at dry-run or continue through apply-and-verify.",
+    "bullets": [
+      "Allowlisted repo selection",
+      "Dry-run or apply-and-verify",
+      "Bounded autonomy"
+    ],
+    "screenshot": "new-run.png",
+    "audioSrc": "demo-video/audio/03-new-run.mp3",
+    "durationInFrames": 439,
+    "accentFrom": "#8bf5b5",
+    "accentTo": "#22c55e"
+  },
+  {
+    "id": "recipes",
+    "kicker": "Guardrails",
+    "title": "Policy is part of the product.",
+    "body": "Repository-specific commands, outbound rules, package managers, and CI hooks stay visible and reviewable so the workflow can scale without dropping its safety model.",
+    "bullets": [
+      "Repo-specific commands",
+      "Outbound domain allowlists",
+      "CI wiring"
+    ],
+    "screenshot": "recipes.png",
+    "audioSrc": "demo-video/audio/04-recipes.mp3",
+    "durationInFrames": 389,
+    "accentFrom": "#facc15",
+    "accentTo": "#f97316"
+  },
+  {
+    "id": "run-live",
+    "kicker": "Run Trace",
+    "title": "The trace is the trust layer.",
+    "body": "Evidence parsing, suspect files, sandbox execution, and verification status update in real time as a readable narrative of what the system actually did.",
+    "bullets": [
+      "Evidence parsed",
+      "Sandbox execution",
+      "Verification in motion"
+    ],
+    "screenshot": "run-live.png",
+    "audioSrc": "demo-video/audio/05-run-live.mp3",
+    "durationInFrames": 447,
+    "accentFrom": "#38bdf8",
+    "accentTo": "#14b8a6"
+  },
+  {
+    "id": "run-complete",
+    "kicker": "Proof",
+    "title": "The detail page turns verification into evidence.",
+    "body": "Confidence, reproducibility, observability coverage, replay actions, and trace links sit beside the underlying evidence before approval is requested.",
+    "bullets": [
+      "Confidence and reproducibility",
+      "Replay and trace links",
+      "Evidence before approval"
+    ],
+    "screenshot": "run-complete.png",
+    "audioSrc": "demo-video/audio/06-run-complete.mp3",
+    "durationInFrames": 427,
+    "accentFrom": "#c084fc",
+    "accentTo": "#60a5fa"
+  },
+  {
+    "id": "admin",
+    "kicker": "Admin Console",
+    "title": "Every run becomes operational memory.",
+    "body": "Run history, approval records, policy inventory, and incident correlation make the control plane durable long after the live fix is done.",
+    "bullets": [
+      "Approval ledger",
+      "Policy inventory",
+      "Incident correlation"
+    ],
+    "screenshot": "admin.png",
+    "audioSrc": "demo-video/audio/07-admin.mp3",
+    "durationInFrames": 431,
+    "accentFrom": "#fda4af",
+    "accentTo": "#fb7185"
+  },
+  {
+    "id": "voice",
+    "kicker": "Voice Surface",
+    "title": "Voice feeds the same governed engine.",
+    "body": "The operator can start from speech, pick a repository, and hand the work to the same policy-aware execution loop.",
+    "bullets": [
+      "Realtime voice intake",
+      "Repo-aware handoff",
+      "Same workflow backend"
+    ],
+    "screenshot": "voice.png",
+    "audioSrc": "demo-video/audio/08-voice.mp3",
+    "durationInFrames": 290,
+    "accentFrom": "#fda4af",
+    "accentTo": "#fb7185"
+  },
+  {
+    "id": "finale",
+    "kicker": "RePro",
+    "title": "More than a coding agent.",
+    "body": "Verification-first software reliability with multimodal intake, sandboxed execution, human approval at the edge, and auditable proof at the end.",
+    "bullets": [
+      "Multimodal intake",
+      "Sandboxed execution",
+      "Auditable proof"
+    ],
+    "screenshot": null,
+    "audioSrc": "demo-video/audio/09-finale.mp3",
+    "durationInFrames": 372,
+    "accentFrom": "#7dd3fc",
+    "accentTo": "#34d399"
+  }
+]

@@ -13,6 +13,7 @@ import type { RunStep } from "@/components/runs/run-timeline";
 interface RunData {
   id: string;
   created_at: string;
+  updated_at?: string;
   status: string;
   repo_owner: string;
   repo_name: string;
@@ -26,6 +27,7 @@ interface RunData {
   observability_coverage: number | null;
   sentry_trace_url: string | null;
   trace_id: string | null;
+  workflow_input: Record<string, unknown> | null;
 }
 
 interface ApprovalData {
@@ -168,6 +170,111 @@ export default async function RunDetailPage({
         hasReceipts={Boolean(receipts)}
         sentryTraceUrl={run.sentry_trace_url}
       />
+
+      {/* Step progress overview */}
+      {steps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Progress</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {(() => {
+              const completed = steps.filter((s) => s.status === "completed" || s.status === "skipped").length;
+              const running = steps.find((s) => s.status === "running");
+              const failed = steps.find((s) => s.status === "failed");
+              const total = steps.length;
+              const pct = Math.round((completed / Math.max(total, 1)) * 100);
+              return (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {completed}/{total} steps completed
+                    </span>
+                    <span className="font-mono text-muted-foreground">{pct}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.08]">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  {running && (
+                    <p className="text-sm text-muted-foreground">
+                      ⏳ <span className="font-medium text-foreground">{running.title}</span> — {running.summary ?? "In progress"}
+                    </p>
+                  )}
+                  {failed && !running && (
+                    <p className="text-sm text-destructive">
+                      ❌ <span className="font-medium">{failed.title}</span> — {failed.summary ?? "Failed"}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Workflow input summary */}
+      {run.workflow_input && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">What was submitted</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {(() => {
+              const wi = run.workflow_input as Record<string, unknown>;
+              const incident = wi.incident as Record<string, unknown> | undefined;
+              const config = wi.config as Record<string, unknown> | undefined;
+              return (
+                <>
+                  {incident?.summaryText && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Incident summary</p>
+                      <p className="mt-1 text-sm leading-6 text-foreground whitespace-pre-wrap">{String(incident.summaryText)}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-3">
+                      <p className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">Mode</p>
+                      <p className="mt-1 text-sm font-medium">{run.mode === "dry_run" ? "Dry Run" : "Apply + Verify"}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-3">
+                      <p className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">Environment</p>
+                      <p className="mt-1 text-sm font-medium">{run.environment}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-3">
+                      <p className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">Source</p>
+                      <p className="mt-1 text-sm font-medium">{run.source}</p>
+                    </div>
+                    {config?.maxAgentIterations != null && (
+                      <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-3">
+                        <p className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">Max iterations</p>
+                        <p className="mt-1 text-sm font-medium">{String(config.maxAgentIterations)}</p>
+                      </div>
+                    )}
+                  </div>
+                  {incident?.artifacts && Array.isArray(incident.artifacts) && incident.artifacts.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Evidence ({incident.artifacts.length} artifact{incident.artifacts.length !== 1 ? "s" : ""})
+                      </p>
+                      <ul className="mt-1 space-y-1 text-sm text-muted-foreground">
+                        {(incident.artifacts as Array<Record<string, unknown>>).map((a, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-xs font-mono">{String(a.kind ?? "other")}</span>
+                            <span>{String(a.filename ?? "unnamed")}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card interactive>

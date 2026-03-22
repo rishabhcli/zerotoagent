@@ -1,13 +1,13 @@
 import {
   ArrowRight,
+  Box,
   CheckCircle2,
   Clock3,
-  FileCheck2,
+  GitMerge,
   GitPullRequest,
   Radar,
   ShieldCheck,
   Sparkles,
-  Waypoints,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { GlassSurface } from "@/components/ui/glass-surface";
@@ -16,26 +16,37 @@ const runMoments = [
   {
     icon: Radar,
     label: "Incident parsed",
-    detail: "Stack trace and repo scope normalized.",
+    detail: "Root cause identified. Affected files scoped.",
     status: "00:12",
+    done: true,
   },
   {
-    icon: Waypoints,
-    label: "Sandbox reproduced",
-    detail: "The 500 was recreated in an isolated runner.",
+    icon: Box,
+    label: "Sandbox created",
+    detail: "Isolated environment spun up. Failure reproduced.",
     status: "00:47",
+    done: true,
   },
   {
-    icon: FileCheck2,
-    label: "Patch verified",
-    detail: "Checks passed and receipts were attached.",
+    icon: ShieldCheck,
+    label: "Fix verified in sandbox",
+    detail: "Patch applied. 47 tests passed, 0 regressions.",
     status: "03:21",
+    done: true,
   },
   {
     icon: GitPullRequest,
-    label: "Approval waiting",
-    detail: "The PR stays closed until approval.",
-    status: "pending",
+    label: "Approved by @alice",
+    detail: "Human reviewed the diff and evidence bundle.",
+    status: "04:05",
+    done: true,
+  },
+  {
+    icon: GitMerge,
+    label: "PR pushed",
+    detail: "Branch pushed, PR #1843 opened, CI passing.",
+    status: "04:18",
+    done: true,
   },
 ];
 
@@ -89,8 +100,8 @@ export function HeroSection() {
               </span>
             </h1>
             <p className="body-lead max-w-2xl">
-              RePro reads the incident, reproduces the failure, verifies the
-              fix, and stops at approval with receipts attached.
+              RePro creates an isolated sandbox, reproduces the failure,
+              verifies the fix, and pushes a PR after human approval.
             </p>
           </div>
 
@@ -191,7 +202,7 @@ export function HeroSection() {
                       </p>
                     </div>
                     <div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-emerald-300">
-                      {index < 3 ? (
+                      {moment.done ? (
                         <CheckCircle2 className="size-3.5" />
                       ) : (
                         <Clock3 className="size-3.5" />

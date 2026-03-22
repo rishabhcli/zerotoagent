@@ -12,21 +12,31 @@ import { Badge } from "@/components/ui/badge";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
 const lines = [
-  { text: "$ patchpilot run --repo acme/api --issue 1842", type: "command" as const, delay: 0 },
-  { text: "◐ Parsing incident #1842...", type: "info" as const, delay: 800 },
-  { text: "  Root cause: null pointer in UserService.getProfile()", type: "dim" as const, delay: 1400 },
-  { text: "  Affected files: src/services/user.ts, src/middleware/auth.ts", type: "dim" as const, delay: 1800 },
-  { text: "✓ Incident parsed", type: "success" as const, delay: 2200 },
-  { text: "◐ Reproducing failure in sandbox...", type: "info" as const, delay: 2800 },
-  { text: "  ✗ GET /api/user/profile → 500 (NullPointerException)", type: "error" as const, delay: 3400 },
-  { text: "✓ Failure reproduced", type: "success" as const, delay: 3900 },
-  { text: "◐ Generating patch...", type: "info" as const, delay: 4400 },
-  { text: "  + if (!user) return res.status(404).json({ error: 'Not found' })", type: "added" as const, delay: 5000 },
-  { text: "✓ Patch applied", type: "success" as const, delay: 5500 },
-  { text: "◐ Running verification suite...", type: "info" as const, delay: 6000 },
-  { text: "  Tests: 47 passed, 0 failed", type: "dim" as const, delay: 6800 },
-  { text: "✓ All checks passed", type: "success" as const, delay: 7200 },
-  { text: "⏸ Awaiting approval → https://patchpilot.dev/runs/r_8xK2m", type: "primary" as const, delay: 7800 },
+  { text: "$ repro run --repo acme/api --issue 1842", type: "command" as const, delay: 0 },
+  { text: "◐ Parsing incident #1842...", type: "info" as const, delay: 700 },
+  { text: "  Root cause: null pointer in UserService.getProfile()", type: "dim" as const, delay: 1200 },
+  { text: "  Affected: src/services/user.ts, src/middleware/auth.ts", type: "dim" as const, delay: 1500 },
+  { text: "✓ Incident parsed", type: "success" as const, delay: 1900 },
+  { text: "◐ Creating sandbox sbx_a4Kx9...", type: "info" as const, delay: 2400 },
+  { text: "  Cloning acme/api@main into isolated runner", type: "dim" as const, delay: 2900 },
+  { text: "  Installing deps and seeding test DB", type: "dim" as const, delay: 3200 },
+  { text: "✓ Sandbox ready", type: "success" as const, delay: 3700 },
+  { text: "◐ Reproducing failure in sandbox...", type: "info" as const, delay: 4100 },
+  { text: "  ✗ GET /api/user/profile → 500 (NullPointerException)", type: "error" as const, delay: 4600 },
+  { text: "✓ Failure reproduced", type: "success" as const, delay: 5000 },
+  { text: "◐ Generating patch...", type: "info" as const, delay: 5400 },
+  { text: "  + if (!user) return res.status(404).json({ error: 'Not found' })", type: "added" as const, delay: 5900 },
+  { text: "✓ Patch applied in sandbox", type: "success" as const, delay: 6300 },
+  { text: "◐ Running verification in sandbox...", type: "info" as const, delay: 6700 },
+  { text: "  Tests: 47 passed, 0 failed", type: "dim" as const, delay: 7300 },
+  { text: "✓ All checks passed", type: "success" as const, delay: 7600 },
+  { text: "⏸ Awaiting approval...", type: "primary" as const, delay: 8100 },
+  { text: "✓ Approved by @alice", type: "success" as const, delay: 9200 },
+  { text: "◐ Creating pull request...", type: "info" as const, delay: 9700 },
+  { text: "  Branch: repro/fix-1842-null-user pushed", type: "dim" as const, delay: 10200 },
+  { text: "  PR #1843 opened → acme/api", type: "dim" as const, delay: 10500 },
+  { text: "✓ PR created and CI triggered", type: "success" as const, delay: 10900 },
+  { text: "✓ CI passed · run complete", type: "success" as const, delay: 11800 },
 ];
 
 const colorMap: Record<string, string> = {
@@ -42,21 +52,21 @@ const colorMap: Record<string, string> = {
 const evidencePanels = [
   {
     icon: LockKeyhole,
-    title: "Approval console",
-    copy: "Approver required before PR creation.",
-    detail: "approval.requested",
+    title: "Sandboxed isolation",
+    copy: "Every reproduction and fix runs in a disposable sandbox. Your infra stays untouched.",
+    detail: "sandbox.created",
   },
   {
     icon: FileArchive,
-    title: "Receipt package",
-    copy: "Trace, diff, and receipts stay bundled.",
-    detail: "receipts.created",
+    title: "Approval gate",
+    copy: "Workflow pauses with full evidence attached. No PR is pushed without human sign-off.",
+    detail: "approval.resolved",
   },
   {
     icon: GitPullRequest,
-    title: "Policy-aware output",
-    copy: "Repo guardrails stay visible to the handoff.",
-    detail: "repo.policy_resolved",
+    title: "PR push + CI",
+    copy: "After approval, the branch is pushed, PR opened, and CI runs on your repo.",
+    detail: "pr.created",
   },
 ];
 
@@ -96,12 +106,12 @@ export function TerminalDemo() {
   return (
     <section id="evidence" ref={sectionRef} className="home-section">
       <div className="mb-12 max-w-3xl space-y-4">
-        <p className="section-kicker">Evidence band</p>
+        <p className="section-kicker">Observability</p>
         <h2 className="display-section text-foreground">
-          The run stays legible while it moves.
+          Every step is visible. Nothing is hidden.
         </h2>
         <p className="body-lead max-w-2xl">
-          Terminal on one side. Approval and receipts on the other.
+          Watch the sandbox spin up, the fix get verified, and the PR get pushed — all in one trace.
         </p>
       </div>
 

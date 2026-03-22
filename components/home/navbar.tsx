@@ -5,7 +5,7 @@ import { GitHubSignInButton } from "@/components/home/github-sign-in-button";
 
 const navItems = [
   { href: "#workflow", label: "Pipeline" },
-  { href: "#evidence", label: "Evidence" },
+  { href: "#evidence", label: "Observability" },
   { href: "#features", label: "Capabilities" },
 ];
 

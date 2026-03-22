@@ -1,5 +1,6 @@
 import {
-  Bug,
+  Box,
+  GitMerge,
   GitPullRequest,
   Search,
   ShieldCheck,
@@ -12,37 +13,44 @@ const steps = [
   {
     icon: Search,
     title: "Diagnose",
-    description: "Normalize the incident into one run.",
+    description: "Parse the incident, identify root cause and affected files.",
     footer: "incident.parsed",
     accent: "from-sky-400/60 via-sky-300/25 to-transparent",
   },
   {
-    icon: Bug,
-    title: "Reproduce",
-    description: "Replay the failure in a sandbox.",
-    footer: "reproduction.completed",
+    icon: Box,
+    title: "Sandbox",
+    description: "Spin up an isolated environment and reproduce the failure.",
+    footer: "sandbox.created",
     accent: "from-amber-300/60 via-orange-300/20 to-transparent",
   },
   {
     icon: Wrench,
     title: "Patch",
-    description: "Generate the smallest useful diff.",
+    description: "Generate the smallest diff that fixes the root cause.",
     footer: "patch.generated",
     accent: "from-indigo-300/55 via-primary/20 to-transparent",
   },
   {
     icon: ShieldCheck,
     title: "Verify",
-    description: "Run checks and surface the result.",
+    description: "Run the full test suite inside the sandbox to confirm the fix.",
     footer: "verification.completed",
     accent: "from-emerald-300/60 via-emerald-300/18 to-transparent",
   },
   {
     icon: GitPullRequest,
     title: "Approve",
-    description: "Pause until a human decides.",
-    footer: "approval.requested",
+    description: "Workflow pauses. A human reviews the diff and evidence.",
+    footer: "approval.resolved",
     accent: "from-rose-300/60 via-pink-300/18 to-transparent",
+  },
+  {
+    icon: GitMerge,
+    title: "Ship",
+    description: "PR is created, pushed, and CI runs on the target repo.",
+    footer: "pr.created",
+    accent: "from-violet-300/60 via-purple-300/18 to-transparent",
   },
 ];
 
@@ -52,17 +60,17 @@ export function WorkflowSection() {
       <div className="mb-12 max-w-3xl space-y-4">
         <p className="section-kicker">Pipeline</p>
         <h2 className="display-section text-foreground">
-          One flow from signal to gate.
+          From sandbox to pull request.
         </h2>
         <p className="body-lead max-w-2xl">
-          Evidence first. Patch second. Human approval before output.
+          Isolated sandbox. Verified fix. Human approval before the PR is pushed.
         </p>
       </div>
 
       <div className="relative">
         <div className="pointer-events-none absolute left-12 right-12 top-1/2 hidden h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-white/[0.16] to-transparent lg:block" />
 
-        <div className="grid gap-4 lg:grid-cols-5">
+        <div className="grid gap-4 lg:grid-cols-6">
           {steps.map((step, index) => {
             const Icon = step.icon;
 
