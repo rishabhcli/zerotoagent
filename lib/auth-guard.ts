@@ -1,52 +1,16 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getAuthSession, getSessionRole, type ReProRole } from "@/lib/auth";
-
-type DemoSession = {
-  user: {
-    id: string;
-    email?: string;
-    role: ReProRole;
-  };
-};
-
-async function getDemoOrAuthSession() {
-  const headersList = await headers();
-  const authSession = await getAuthSession(headersList);
-  if (authSession) {
-    return authSession;
-  }
-
-  const demoRoleHeader = headersList.get("x-patchpilot-role");
-  const demoRoleEnv = process.env.PATCHPILOT_DEMO_ROLE;
-  const demoRole = demoRoleHeader ?? demoRoleEnv;
-
-  if (
-    demoRole === "viewer" ||
-    demoRole === "operator" ||
-    demoRole === "approver" ||
-    demoRole === "admin"
-  ) {
-    return {
-      user: {
-        id: headersList.get("x-patchpilot-user-id") ?? "demo-user",
-        email: "demo@patchpilot.local",
-        role: demoRole,
-      },
-    } satisfies DemoSession;
-  }
-
-  return null;
-}
+import { getRequestSession, sessionHasAnyRole } from "@/lib/auth";
 
 /**
  * Check if the user has an active session. Redirects to /api/auth/signin if not.
  * Returns the session if authenticated.
  *
- * In development without POSTGRES_URL, skips auth to allow local testing.
+ * In development, PATCHPILOT_DEMO_ROLE can be used as a local-only demo bypass.
  */
 export async function requireAuth() {
-  const session = await getDemoOrAuthSession();
+  const headersList = await headers();
+  const session = await getRequestSession(headersList, { allowDemo: true });
 
   if (!session) {
     redirect("/");
@@ -63,7 +27,7 @@ export async function requireAdmin() {
 
   if (!session) return null;
 
-  if (getSessionRole(session) !== "admin") {
+  if (!sessionHasAnyRole(session, ["admin"])) {
     redirect("/dashboard");
   }
 
@@ -75,8 +39,19 @@ export async function requireApprover() {
 
   if (!session) return null;
 
-  const role = getSessionRole(session);
-  if (role !== "approver" && role !== "admin") {
+  if (!sessionHasAnyRole(session, ["approver", "admin"])) {
+    redirect("/dashboard");
+  }
+
+  return session;
+}
+
+export async function requireOperator() {
+  const session = await requireAuth();
+
+  if (!session) return null;
+
+  if (!sessionHasAnyRole(session, ["operator", "approver", "admin"])) {
     redirect("/dashboard");
   }
 

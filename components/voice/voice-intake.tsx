@@ -278,10 +278,10 @@ export function VoiceIntake({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-3xl border border-border/60 bg-background/40 p-5 text-sm text-muted-foreground">
-              Add a repo policy first, then come back here and the microphone flow will be ready immediately.
+              Ask an admin to add a repo policy first, then come back here and the microphone flow will be ready immediately.
             </div>
-            <Link href="/dashboard/recipes">
-              <Button>Open Repo Policies</Button>
+            <Link href="/dashboard">
+              <Button>Back to Dashboard</Button>
             </Link>
           </CardContent>
         </Card>

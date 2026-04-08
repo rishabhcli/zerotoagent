@@ -1,16 +1,42 @@
 import { getSupabaseAdmin } from "@/lib/patchpilot/supabase";
+import { getRequestSession, getSessionUserId, sessionHasAnyRole } from "@/lib/auth";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ runId: string }> }
 ) {
   const { runId } = await context.params;
+  const session = await getRequestSession(request.headers, { allowDemo: true });
+  if (!session) {
+    return Response.json({ ok: false, message: "Authentication required" }, { status: 401 });
+  }
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
     return Response.json(
       { ok: false, message: "Supabase is not configured" },
       { status: 503 }
+    );
+  }
+
+  const { data: run } = await supabase
+    .from("runs")
+    .select("created_by_user_id")
+    .eq("id", runId)
+    .maybeSingle();
+
+  if (
+    run?.created_by_user_id &&
+    run.created_by_user_id !== getSessionUserId(session) &&
+    !sessionHasAnyRole(session, ["approver", "admin"])
+  ) {
+    return Response.json({ ok: false, message: "Forbidden" }, { status: 403 });
+  }
+
+  if (!run?.created_by_user_id && !sessionHasAnyRole(session, ["approver", "admin"])) {
+    return Response.json(
+      { ok: false, message: "Only approvers or admins can download legacy receipts" },
+      { status: 403 }
     );
   }
 

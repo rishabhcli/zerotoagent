@@ -3,11 +3,23 @@ import { patchPilotIncidentToPR } from "@/workflows/patchpilot";
 import type { ReProWorkflowInput } from "@/workflows/patchpilot";
 import { RunStartPayloadSchema } from "@/lib/patchpilot/contracts";
 import { requireRepoPolicy } from "@/lib/patchpilot/policy";
-import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
 import { createReProRunId } from "@/lib/patchpilot/run-id";
 import { upsertRunRecordRow } from "@/lib/patchpilot/upsert-run-record";
+import { getRequestSession, getSessionUserId, sessionHasAnyRole } from "@/lib/auth";
 
 export async function POST(request: Request) {
+  const session = await getRequestSession(request.headers, { allowDemo: true });
+  if (!session) {
+    return Response.json({ ok: false, message: "Authentication required" }, { status: 401 });
+  }
+
+  if (!sessionHasAnyRole(session, ["operator", "approver", "admin"])) {
+    return Response.json(
+      { ok: false, message: "Operator, approver, or admin role required" },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = RunStartPayloadSchema.safeParse(body);
   if (!parsed.success) {
@@ -19,12 +31,6 @@ export async function POST(request: Request) {
       },
       { status: 400 }
     );
-  }
-
-  try {
-    await syncGitHubInstallationRecipes();
-  } catch (error) {
-    console.error("[api/runs/start] failed to sync GitHub repositories", error);
   }
 
   try {
@@ -40,9 +46,13 @@ export async function POST(request: Request) {
   }
 
   const runId = parsed.data.runId ?? createReProRunId();
+  const sanitizedConfig = {
+    maxAgentIterations: parsed.data.config.maxAgentIterations,
+  };
   const input: ReProWorkflowInput = {
     ...parsed.data,
     runId,
+    config: sanitizedConfig,
   };
 
   await upsertRunRecordRow({
@@ -50,6 +60,7 @@ export async function POST(request: Request) {
     repoOwner: input.repo.owner,
     repoName: input.repo.name,
     defaultBranch: input.repo.defaultBranch,
+    createdByUserId: getSessionUserId(session),
     source: input.source,
     mode: input.mode,
     environment: input.environment,

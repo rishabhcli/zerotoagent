@@ -12,6 +12,7 @@ export async function upsertRunRecordRow(input: {
   repoOwner: string;
   repoName: string;
   defaultBranch: string;
+  createdByUserId?: string | null;
   source: RunSource;
   mode: RunMode;
   environment: string;
@@ -25,6 +26,9 @@ export async function upsertRunRecordRow(input: {
   await supabase.from("runs").upsert(
     {
       id: input.runId,
+      ...(input.createdByUserId !== undefined
+        ? { created_by_user_id: input.createdByUserId }
+        : {}),
       repo_owner: input.repoOwner,
       repo_name: input.repoName,
       base_branch: input.defaultBranch,

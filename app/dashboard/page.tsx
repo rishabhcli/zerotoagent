@@ -2,33 +2,11 @@ import Link from "next/link";
 import { Activity, Mic, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassSurface } from "@/components/ui/glass-surface";
-import { RunListTable, type Run } from "@/components/runs/run-list-table";
+import { RunListTable } from "@/components/runs/run-list-table";
 import { requireAuth } from "@/lib/auth-guard";
+import { getDashboardRuns } from "@/lib/dashboard-data";
 
-async function getRuns(): Promise<Run[]> {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return [];
-  }
-
-  const { createClient } = await import("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } }
-  );
-
-  const { data } = await supabase
-    .from("runs")
-    .select(
-      "id, created_at, status, repo_owner, repo_name, source, mode, confidence_score, observability_coverage"
-    )
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  return (data as Run[]) ?? [];
-}
-
-function averageConfidence(runs: Run[]) {
+function averageConfidence(runs: Awaited<ReturnType<typeof getDashboardRuns>>) {
   const withConfidence = runs.filter((run) => run.confidence_score != null);
   if (withConfidence.length === 0) return null;
 
@@ -41,8 +19,8 @@ function averageConfidence(runs: Run[]) {
 }
 
 export default async function DashboardPage() {
-  await requireAuth();
-  const runs = await getRuns();
+  const session = await requireAuth();
+  const runs = await getDashboardRuns(session);
 
   const awaitingApproval = runs.filter(
     (run) => run.status === "awaiting_approval"

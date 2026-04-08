@@ -8,6 +8,7 @@ export type RunEventType = RunEventKind;
 const STATUS_MAP: Partial<Record<RunEventType, string>> = {
   "run.started": "running",
   "approval.requested": "awaiting_approval",
+  "run.blocked": "blocked",
   "run.completed": "completed",
   "run.failed": "failed",
 };

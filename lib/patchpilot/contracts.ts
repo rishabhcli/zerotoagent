@@ -70,6 +70,7 @@ export const RunEventKindSchema = z.enum([
   "ci.completed",
   "receipts.created",
   "rollback.proposed",
+  "run.blocked",
   "run.completed",
   "run.failed",
 ]);
@@ -279,6 +280,7 @@ export const RUN_EVENT_LABELS: Record<RunEventKind, string> = {
   "ci.completed": "CI Completed",
   "receipts.created": "Receipts Created",
   "rollback.proposed": "Rollback Proposed",
+  "run.blocked": "Run Blocked",
   "run.completed": "Run Completed",
   "run.failed": "Run Failed",
 };

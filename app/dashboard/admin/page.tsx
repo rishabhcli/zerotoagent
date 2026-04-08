@@ -9,102 +9,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { SyncRecipesButton } from "@/components/admin/sync-recipes-button";
 import { RunStatusBadge } from "@/components/runs/run-status-badge";
 import { requireAdmin } from "@/lib/auth-guard";
-import { syncGitHubInstallationRecipes } from "@/lib/patchpilot/repo-sync";
-
-interface RunRow {
-  id: string;
-  created_at: string;
-  status: string;
-  repo_owner: string;
-  repo_name: string;
-  source: string | null;
-  mode: string | null;
-  error_signature: string | null;
-  confidence_score: number | null;
-  observability_coverage: number | null;
-}
-
-interface ApprovalRow {
-  token: string;
-  run_id: string;
-  requested_at: string;
-  resolved_at: string | null;
-  approved: boolean | null;
-  comment: string | null;
-  resolved_by_user_id: string | null;
-}
-
-interface RecipeRow {
-  id: string;
-  repo_owner: string;
-  repo_name: string;
-  enabled: boolean;
-  ci_workflow_name: string | null;
-  installation_id: number | null;
-  allowed_domains: string[];
-  allowed_command_categories: string[];
-}
-
-async function getData() {
-  let syncedRepositories: string[] = [];
-  let syncedRepoCount: number | null = null;
-  let installationCount: number | null = null;
-
-  try {
-    const syncSummary = await syncGitHubInstallationRecipes();
-    if (syncSummary.synced) {
-      syncedRepositories = syncSummary.repositories;
-      syncedRepoCount = syncSummary.discoveredRepoCount;
-      installationCount = syncSummary.installationCount;
-    }
-  } catch (error) {
-    console.error("[dashboard/admin] failed to sync GitHub repositories", error);
-  }
-
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return {
-      runs: [],
-      approvals: [],
-      recipes: [],
-      syncedRepositories,
-      syncedRepoCount,
-      installationCount,
-    };
-  }
-
-  const { createClient } = await import("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } }
-  );
-
-  const [runsRes, approvalsRes, recipesRes] = await Promise.all([
-    supabase.from("runs").select("*").order("created_at", { ascending: false }).limit(100),
-    supabase.from("approvals").select("*").order("requested_at", { ascending: false }).limit(100),
-    supabase.from("recipes").select("*").order("repo_owner").order("repo_name"),
-  ]);
-
-  return {
-    runs: (runsRes.data as RunRow[]) ?? [],
-    approvals: (approvalsRes.data as ApprovalRow[]) ?? [],
-    recipes: (recipesRes.data as RecipeRow[]) ?? [],
-    syncedRepositories,
-    syncedRepoCount,
-    installationCount,
-  };
-}
+import { getAdminConsoleData } from "@/lib/dashboard-data";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const { runs, approvals, recipes, syncedRepositories, syncedRepoCount, installationCount } =
-    await getData();
-  const syncedRepositorySet = new Set(syncedRepositories);
-  const stalePolicyCount = recipes.filter(
-    (recipe) => !syncedRepositorySet.has(`${recipe.repo_owner}/${recipe.repo_name}`)
-  ).length;
+  const { runs, approvals, recipes } = await getAdminConsoleData();
   const correlations = runs.reduce<Array<{ key: string; count: number; repo: string }>>((acc, run) => {
     const key = run.error_signature ?? `${run.repo_owner}/${run.repo_name}`;
     const existing = acc.find((item) => item.key === key);
@@ -135,25 +47,10 @@ export default async function AdminPage() {
           Same calmer operator material system, denser data surfaces, and
           approval history when you need to inspect the control plane.
         </p>
+        <div className="mt-6">
+          <SyncRecipesButton />
+        </div>
       </GlassSurface>
-
-      {syncedRepoCount != null ? (
-        <Card interactive>
-          <CardContent className="flex flex-wrap items-center gap-6 py-5 text-sm text-muted-foreground">
-            <span>
-              GitHub App inventory: <span className="font-medium text-foreground">{syncedRepoCount}</span>{" "}
-              repositories
-            </span>
-            <span>
-              Installations: <span className="font-medium text-foreground">{installationCount ?? 0}</span>
-            </span>
-            <span>
-              Policies outside installation access:{" "}
-              <span className="font-medium text-foreground">{stalePolicyCount}</span>
-            </span>
-          </CardContent>
-        </Card>
-      ) : null}
 
       <Tabs defaultValue="runs">
         <TabsList>
@@ -260,7 +157,6 @@ export default async function AdminPage() {
                 <TableRow>
                   <TableHead>Repo</TableHead>
                   <TableHead>Enabled</TableHead>
-                  <TableHead>Installation Access</TableHead>
                   <TableHead>GitHub App</TableHead>
                   <TableHead>CI Workflow</TableHead>
                   <TableHead>Allowed Domains</TableHead>
@@ -271,13 +167,6 @@ export default async function AdminPage() {
                   <TableRow key={recipe.id}>
                     <TableCell>{recipe.repo_owner}/{recipe.repo_name}</TableCell>
                     <TableCell>{recipe.enabled ? "true" : "false"}</TableCell>
-                    <TableCell>
-                      {syncedRepositorySet.size === 0
-                        ? "unknown"
-                        : syncedRepositorySet.has(`${recipe.repo_owner}/${recipe.repo_name}`)
-                          ? "installed"
-                          : "missing"}
-                    </TableCell>
                     <TableCell>{recipe.installation_id ?? "—"}</TableCell>
                     <TableCell>{recipe.ci_workflow_name ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">

@@ -6,111 +6,22 @@ import { RunStatusBadge } from "@/components/runs/run-status-badge";
 import { RunTimeline } from "@/components/runs/run-timeline";
 import { ApprovalCard } from "@/components/runs/approval-card";
 import { RunActionBar } from "@/components/runs/run-action-bar";
-import type { RunEvent } from "@/hooks/use-run-events";
 import { requireAuth } from "@/lib/auth-guard";
-import type { RunStep } from "@/components/runs/run-timeline";
-
-interface RunData {
-  id: string;
-  created_at: string;
-  status: string;
-  repo_owner: string;
-  repo_name: string;
-  base_branch: string;
-  source: string;
-  mode: string;
-  environment: string;
-  outcome_summary: string | null;
-  confidence_score: number | null;
-  reproducibility_score: number | null;
-  observability_coverage: number | null;
-  sentry_trace_url: string | null;
-  trace_id: string | null;
-}
-
-interface ApprovalData {
-  token: string;
-  approved: boolean | null;
-  resolved_at: string | null;
-  required_role: string | null;
-  decision_summary: Record<string, unknown> | null;
-}
-
-interface PatchData {
-  unified_diff: string;
-  diffstat: string | null;
-}
-
-interface PrData {
-  pr_url: string;
-  pr_number: number;
-  summary: string | null;
-}
-
-interface CiData {
-  status: string;
-  conclusion: string | null;
-  summary: string | null;
-  url: string | null;
-}
-
-interface ReceiptPackageData {
-  storage_path: string;
-  manifest: Record<string, unknown> | null;
-}
-
-async function getRunData(runId: string) {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return {
-      run: null,
-      events: [],
-      steps: [],
-      approval: null,
-      patch: null,
-      pr: null,
-      ci: null,
-      receipts: null,
-    };
-  }
-
-  const { createClient } = await import("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } }
-  );
-
-  const [runRes, eventsRes, stepsRes, approvalRes, patchRes, prRes, ciRes, receiptsRes] = await Promise.all([
-    supabase.from("runs").select("*").eq("id", runId).single(),
-    supabase.from("run_events").select("*").eq("run_id", runId).order("seq"),
-    supabase.from("run_steps").select("*").eq("run_id", runId).order("started_at"),
-    supabase.from("approvals").select("*").eq("run_id", runId).maybeSingle(),
-    supabase.from("patches").select("*").eq("run_id", runId).maybeSingle(),
-    supabase.from("prs").select("*").eq("run_id", runId).maybeSingle(),
-    supabase.from("ci_runs").select("*").eq("run_id", runId).order("started_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("receipt_packages").select("*").eq("run_id", runId).maybeSingle(),
-  ]);
-
-  return {
-    run: runRes.data as RunData | null,
-    events: (eventsRes.data as RunEvent[]) ?? [],
-    steps: (stepsRes.data as RunStep[]) ?? [],
-    approval: approvalRes.data as ApprovalData | null,
-    patch: patchRes.data as PatchData | null,
-    pr: prRes.data as PrData | null,
-    ci: ciRes.data as CiData | null,
-    receipts: receiptsRes.data as ReceiptPackageData | null,
-  };
-}
+import {
+  canResolveApprovals,
+  canStartRuns,
+  getRunDetailView,
+} from "@/lib/dashboard-data";
 
 export default async function RunDetailPage({
   params,
 }: {
   params: Promise<{ runId: string }>;
 }) {
-  await requireAuth();
+  const session = await requireAuth();
   const { runId } = await params;
-  const { run, events, steps, approval, patch, pr, ci, receipts } = await getRunData(runId);
+  const { run, events, steps, approval, patch, pr, ci, receipts } =
+    await getRunDetailView(session, runId);
 
   if (!run) {
     return (
@@ -165,6 +76,7 @@ export default async function RunDetailPage({
 
       <RunActionBar
         runId={runId}
+        canReplay={canStartRuns(session)}
         hasReceipts={Boolean(receipts)}
         sentryTraceUrl={run.sentry_trace_url}
       />
@@ -219,6 +131,7 @@ export default async function RunDetailPage({
       {run.status === "awaiting_approval" && approval && !approval.resolved_at && (
         <div id="approval-console">
           <ApprovalCard
+            canResolve={canResolveApprovals(session)}
             runId={runId}
             requiredRole={approval.required_role ?? "approver"}
             patchSummary={

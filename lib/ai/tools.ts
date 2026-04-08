@@ -12,6 +12,42 @@ import { redactSensitiveText } from "@/lib/patchpilot/redaction";
 
 const MAX_STDOUT = 10_000;
 const MAX_STDERR = 5_000;
+const BLOCKED_WRITE_PREFIXES = [".git/", "node_modules/", ".next/"];
+const BLOCKED_WRITE_PATHS = [
+  ".env",
+  ".env.local",
+  ".env.production",
+  ".env.development",
+  "pnpm-lock.yaml",
+  "package-lock.json",
+  "yarn.lock",
+];
+
+function normalizeSandboxPath(inputPath: string) {
+  return inputPath.replace(/\\/g, "/").replace(/^\.\/+/, "");
+}
+
+function assertRepoRelativePath(path: string) {
+  const normalizedPath = normalizeSandboxPath(path);
+  if (!normalizedPath || normalizedPath.startsWith("/") || normalizedPath.includes("..")) {
+    throw new Error(`Invalid sandbox path: ${path}`);
+  }
+
+  return normalizedPath;
+}
+
+function assertWritableSandboxPath(path: string) {
+  const normalizedPath = assertRepoRelativePath(path);
+  if (BLOCKED_WRITE_PATHS.includes(normalizedPath)) {
+    throw new Error(`Refusing to overwrite protected file: ${normalizedPath}`);
+  }
+
+  if (BLOCKED_WRITE_PREFIXES.some((prefix) => normalizedPath.startsWith(prefix))) {
+    throw new Error(`Refusing to write outside allowed repo surfaces: ${normalizedPath}`);
+  }
+
+  return normalizedPath;
+}
 
 /**
  * Creates AI SDK tools that operate within a Vercel Sandbox instance.
@@ -67,9 +103,10 @@ export function createSandboxTools(
         path: z.string().describe("File path relative to the repo root"),
       }),
       execute: async ({ path }) => {
-        const buffer = await sandbox.readFileToBuffer({ path });
+        const safePath = assertRepoRelativePath(path);
+        const buffer = await sandbox.readFileToBuffer({ path: safePath });
         if (!buffer) {
-          return { error: `File not found: ${path}` };
+          return { error: `File not found: ${safePath}` };
         }
         const content = buffer.toString("utf-8");
         return {
@@ -86,8 +123,9 @@ export function createSandboxTools(
         content: z.string().describe("The complete new file contents"),
       }),
       execute: async ({ path, content }) => {
-        await sandbox.writeFiles([{ path, content: Buffer.from(content) }]);
-        return { success: true, path };
+        const safePath = assertWritableSandboxPath(path);
+        await sandbox.writeFiles([{ path: safePath, content: Buffer.from(content) }]);
+        return { success: true, path: safePath };
       },
     }),
 

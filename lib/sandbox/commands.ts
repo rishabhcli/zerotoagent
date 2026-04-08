@@ -38,6 +38,39 @@ const legacyPolicy: RepoPolicy = {
   metadata: {},
 };
 
+function getExpectedRecipeCommand(
+  policy: RepoPolicy,
+  category: Extract<CommandCategory, "install" | "repro" | "test" | "build">
+) {
+  switch (category) {
+    case "install":
+      return policy.installCommand;
+    case "repro":
+      return policy.reproCommand ?? policy.testCommand;
+    case "test":
+      return policy.testCommand;
+    case "build":
+      return policy.buildCommand ?? null;
+  }
+}
+
+function assertRecipeCommandMatchesPolicy(
+  policy: RepoPolicy,
+  category: Extract<CommandCategory, "install" | "repro" | "test" | "build">,
+  command: string
+) {
+  const expectedCommand = getExpectedRecipeCommand(policy, category);
+  if (!expectedCommand) {
+    throw new Error(`No ${category} command is configured in repo policy.`);
+  }
+
+  if (command !== expectedCommand) {
+    throw new Error(
+      `Refusing to run ${category} command outside repo policy. Expected "${expectedCommand}".`
+    );
+  }
+}
+
 export async function runShellCommand(
   sandbox: Sandbox,
   command: string,
@@ -83,6 +116,10 @@ export async function installDeps(
     throw new Error("installDeps requires an install command");
   }
 
+  if (typeof policyOrCommand !== "string") {
+    assertRecipeCommandMatchesPolicy(policy, "install", command);
+  }
+
   console.log(`[sandbox:${sandbox.sandboxId}] installing deps: ${command}`);
   return runShellCommand(sandbox, command, "install", policy);
 }
@@ -93,6 +130,7 @@ export async function runRecipeCommand(
   category: Extract<CommandCategory, "repro" | "test" | "build">,
   command: string
 ): Promise<CommandResult> {
+  assertRecipeCommandMatchesPolicy(policy, category, command);
   console.log(`[sandbox:${sandbox.sandboxId}] running ${category}: ${command}`);
   return runShellCommand(sandbox, command, category, policy);
 }

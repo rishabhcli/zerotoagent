@@ -5,12 +5,14 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 
 export function ApprovalCard({
+  canResolve = true,
   runId,
   requiredRole = "approver",
   patchSummary,
   testSummary,
   diffstat,
 }: {
+  canResolve?: boolean;
   runId: string;
   requiredRole?: string;
   patchSummary?: string | null;
@@ -72,13 +74,18 @@ export function ApprovalCard({
         {patchSummary ? (
           <p className="text-sm leading-6 text-foreground/90">{patchSummary}</p>
         ) : null}
+        {!canResolve ? (
+          <p className="text-sm text-muted-foreground">
+            An approver or admin must resolve this gate before the PR can be created.
+          </p>
+        ) : null}
         {result && (
           <p className="mt-2 text-sm font-medium">
             {result}
           </p>
         )}
       </CardContent>
-      {status !== "done" && (
+      {canResolve && status !== "done" && (
         <CardFooter className="gap-3">
           <Button
             onClick={() => handleDecision(true)}

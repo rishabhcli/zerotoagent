@@ -74,6 +74,8 @@ export async function sandboxFixStep(input: {
   "use step";
 
   const { runId, repo, parsed, focus, config, policy } = input;
+  void runId;
+  void config;
   let sandbox: Awaited<ReturnType<typeof createRepoSandbox>> | undefined;
 
   try {
@@ -86,10 +88,10 @@ export async function sandboxFixStep(input: {
           runtime: "node24",
         });
 
-    const installCommand = config.installCommand ?? policy.installCommand;
-    const reproCommand = config.reproCommand ?? policy.reproCommand ?? config.testCommand ?? policy.testCommand;
-    const testCommand = config.testCommand ?? policy.testCommand;
-    const buildCommand = config.buildCommand ?? policy.buildCommand ?? undefined;
+    const installCommand = policy.installCommand;
+    const reproCommand = policy.reproCommand ?? policy.testCommand;
+    const testCommand = policy.testCommand;
+    const buildCommand = policy.buildCommand ?? undefined;
 
     const networkInstallState = await applyInstallNetworkPolicy(sandbox, policy);
     const installResult = await installDeps(sandbox, policy, installCommand);

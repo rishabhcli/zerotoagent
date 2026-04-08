@@ -1,43 +1,6 @@
 import { VoiceIntake, type VoiceRepoOption } from "@/components/voice/voice-intake";
-import { requireAuth } from "@/lib/auth-guard";
-
-interface RepoOptionRow {
-  id: string;
-  repo_owner: string;
-  repo_name: string;
-  enabled: boolean;
-  metadata: Record<string, unknown> | null;
-}
-
-async function getRepos(): Promise<VoiceRepoOption[]> {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return [];
-  }
-
-  const { createClient } = await import("@supabase/supabase-js");
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false } }
-  );
-
-  const { data } = await supabase
-    .from("recipes")
-    .select("id, repo_owner, repo_name, enabled, metadata")
-    .eq("enabled", true)
-    .order("repo_owner")
-    .order("repo_name");
-
-  return ((data as RepoOptionRow[]) ?? []).map((repo) => ({
-    id: repo.id,
-    owner: repo.repo_owner,
-    name: repo.repo_name,
-    defaultBranch:
-      typeof repo.metadata?.defaultBranch === "string"
-        ? (repo.metadata.defaultBranch as string)
-        : "main",
-  }));
-}
+import { requireOperator } from "@/lib/auth-guard";
+import { getEnabledRepoOptions } from "@/lib/dashboard-data";
 
 function getInitialRepoId(repos: VoiceRepoOption[]) {
   const defaultOwner = process.env.NEXT_PUBLIC_PATCHPILOT_DEFAULT_REPO_OWNER;
@@ -56,8 +19,8 @@ function getInitialRepoId(repos: VoiceRepoOption[]) {
 }
 
 export default async function VoicePage() {
-  await requireAuth();
-  const repos = await getRepos();
+  await requireOperator();
+  const repos = (await getEnabledRepoOptions()) as VoiceRepoOption[];
 
   return <VoiceIntake repos={repos} initialRepoId={getInitialRepoId(repos)} />;
 }

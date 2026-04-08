@@ -61,17 +61,17 @@ Built for the [Zero to Agent](https://zerotoagent.com) hackathon (Vercel × Goog
 # 1. Clone and install
 git clone https://github.com/your-org/zerotoagent
 cd zerotoagent
-npm install
+pnpm install
 
 # 2. Link to Vercel and pull env vars (provisions OIDC token for Sandbox + AI Gateway)
 vercel link
 vercel env pull
 
-# 3. Set remaining env vars (see .env.example)
-cp .env.example .env.local
+# 3. Set remaining env vars (see .env.local.example)
+cp .env.local.example .env.local
 
 # 4. Run locally
-npm run dev
+pnpm dev
 ```
 
 ---

@@ -32,6 +32,42 @@ export const roles = {
 
 export type ReProRole = keyof typeof roles;
 
+type SessionLike =
+  | {
+      user?: (Record<string, unknown> & {
+        id?: string | null;
+        email?: string | null;
+        name?: string | null;
+        image?: string | null;
+        role?: string | null;
+      }) | null;
+    }
+  | null
+  | undefined;
+
+export type DemoSession = {
+  user: {
+    id: string;
+    email?: string;
+    name?: string;
+    image?: string | null;
+    role: ReProRole;
+  };
+};
+
+type GitHubUserResponse = {
+  id: string | number;
+  login?: string | null;
+  name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+};
+
+type GitHubEmailResponse = {
+  email?: string | null;
+  primary?: boolean;
+};
+
 export function isAuthConfigured() {
   return Boolean(process.env.POSTGRES_URL && process.env.BETTER_AUTH_SECRET);
 }
@@ -49,7 +85,7 @@ function getGitHubSocialProviders() {
       redirectURI: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/auth/callback/github`,
       // Fetch email from GitHub API when profile email is private
       async getUserInfo(token: { accessToken?: string }) {
-        if (!token.accessToken) return null as any;
+        if (!token.accessToken) return null;
         const [userRes, emailsRes] = await Promise.all([
           fetch("https://api.github.com/user", {
             headers: { 
@@ -64,18 +100,26 @@ function getGitHubSocialProviders() {
             },
           }),
         ]);
-        const user = await userRes.json();
-        const emails = await emailsRes.json();
+        if (!userRes.ok || !emailsRes.ok) {
+          return null;
+        }
+        const user = (await userRes.json()) as GitHubUserResponse;
+        const emails = (await emailsRes.json()) as unknown;
         const primaryEmail = Array.isArray(emails)
-          ? emails.find((e: { primary?: boolean }) => e.primary)?.email ?? emails[0]?.email
+          ? (emails as GitHubEmailResponse[]).find((email) => email.primary)?.email ??
+            (emails as GitHubEmailResponse[])[0]?.email
           : null;
         return {
           user: {
             id: String(user.id),
-            name: user.name ?? user.login,
+            name: user.name ?? user.login ?? undefined,
             email: user.email ?? primaryEmail ?? `${user.id}+${user.login}@users.noreply.github.com`,
-            image: user.avatar_url,
+            image: user.avatar_url ?? undefined,
             emailVerified: true,
+          },
+          data: {
+            user,
+            emails,
           },
         };
       },
@@ -90,6 +134,8 @@ function createAuth() {
       process.env.NEXT_PUBLIC_APP_URL ??
       "http://localhost:3000",
     secret: process.env.BETTER_AUTH_SECRET,
+    // Better Auth needs a pg.Pool instance when using the Supabase pooler.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     database: new (require("pg").Pool)({
       connectionString: process.env.POSTGRES_URL?.replace("?sslmode=require", ""),
       ssl: { rejectUnauthorized: false },
@@ -135,16 +181,63 @@ export async function getAuthSession(headers: Headers) {
 }
 
 export function getSessionRole(
-  session:
-    | {
-        user?: (Record<string, unknown> & { role?: string | null }) | null;
-      }
-    | null
-    | undefined
+  session: SessionLike
 ): ReProRole {
   const role = session?.user?.role;
   if (role === "operator" || role === "approver" || role === "admin" || role === "viewer") {
     return role;
   }
   return "viewer";
+}
+
+export function isReProRole(value: unknown): value is ReProRole {
+  return value === "viewer" || value === "operator" || value === "approver" || value === "admin";
+}
+
+export function isDemoAuthEnabled() {
+  return process.env.NODE_ENV !== "production" && isReProRole(process.env.PATCHPILOT_DEMO_ROLE);
+}
+
+export function getDemoSession(): DemoSession | null {
+  if (!isDemoAuthEnabled()) {
+    return null;
+  }
+
+  return {
+    user: {
+      id: "demo-user",
+      email: "demo@patchpilot.local",
+      role: process.env.PATCHPILOT_DEMO_ROLE as ReProRole,
+    },
+  };
+}
+
+export async function getRequestSession(
+  requestHeaders: Headers,
+  options: { allowDemo?: boolean } = {}
+) {
+  const authSession = await getAuthSession(requestHeaders);
+  if (authSession) {
+    return authSession;
+  }
+
+  if (options.allowDemo) {
+    return getDemoSession();
+  }
+
+  return null;
+}
+
+export type RequestSession = NonNullable<Awaited<ReturnType<typeof getRequestSession>>>;
+
+export function sessionHasAnyRole(
+  session: SessionLike,
+  allowedRoles: readonly ReProRole[]
+) {
+  return allowedRoles.includes(getSessionRole(session));
+}
+
+export function getSessionUserId(session: SessionLike) {
+  const userId = session?.user?.id;
+  return typeof userId === "string" && userId.length > 0 ? userId : null;
 }

@@ -2,6 +2,7 @@ import { createHook, FatalError, sleep } from "workflow";
 import { computeObservabilityCoverage, computePatchConfidence, computeReproducibilityScore } from "@/lib/patchpilot/scoring";
 import type { RunStartPayload } from "@/lib/patchpilot/contracts";
 import { requireRepoPolicy } from "@/lib/patchpilot/policy";
+import { createApprovalToken } from "@/lib/patchpilot/run-id";
 import { getRunTraceContext, Sentry } from "@/lib/sentry";
 import { emitRunEvent } from "./steps/emit";
 import { parseIncidentStep } from "./steps/parse";
@@ -364,7 +365,7 @@ export async function patchPilotIncidentToPR(input: ReProWorkflowInput) {
       await emitRunEvent({
         runId,
         seq: seq++,
-        type: "run.failed",
+        type: "run.blocked",
         data: {
           reason: "Issue was not reproducible in sandbox",
           remediation: fix.remediation,
@@ -483,7 +484,7 @@ export async function patchPilotIncidentToPR(input: ReProWorkflowInput) {
       await emitRunEvent({
         runId,
         seq: seq++,
-        type: "run.failed",
+        type: blockedStatus === "blocked" ? "run.blocked" : "run.failed",
         data: {
           reason:
             fix.tests.status === "flaky"
@@ -553,7 +554,7 @@ export async function patchPilotIncidentToPR(input: ReProWorkflowInput) {
       return { runId, status: "completed" as const };
     }
 
-    const approvalToken = `approval:${runId}`;
+    const approvalToken = createApprovalToken(runId);
     await recordRunStep({
       runId,
       stepType: "approval",
@@ -577,7 +578,6 @@ export async function patchPilotIncidentToPR(input: ReProWorkflowInput) {
       seq: seq++,
       type: "approval.requested",
       data: {
-        token: approvalToken,
         patchSummary,
         tests: fix.tests,
       },
@@ -799,6 +799,71 @@ export async function patchPilotIncidentToPR(input: ReProWorkflowInput) {
       type: "ci.completed",
       data: ciResult,
     });
+
+    const ciWatchFinished =
+      ciResult.status === "completed" || ciResult.status === "not_configured";
+
+    if (!ciWatchFinished) {
+      const confidence = computePatchConfidence({
+        reproduced: true,
+        testsPassed: true,
+        flaky: false,
+        diffLineCount: fix.patch.unifiedDiff.split("\n").length,
+        ciPassed: null,
+        missingInfoCount: parsed.requestsForMissingInformation.length,
+      });
+      const observabilityCoverage = computeObservabilityCoverage(
+        totalTrackedSteps,
+        completedReceiptSteps
+      );
+      const outcomeSummary = buildOutcomeSummary({
+        repo,
+        mode: input.mode,
+        status: "blocked",
+        patchSummary,
+      });
+      await updateRunRecord({
+        runId,
+        status: "blocked",
+        outcomeSummary: `${outcomeSummary} ${ciSummary ?? "CI is still pending."}`.trim(),
+        confidenceScore: confidence.score,
+        reproducibilityScore: reproducibility.score,
+        observabilityCoverage,
+      });
+      await finalizeReceiptsStep({
+        runId,
+        workflowInput: input,
+        summary: `${outcomeSummary} ${ciSummary ?? "CI is still pending."}`.trim(),
+        patchSummary,
+        status: "blocked",
+        confidence,
+        reproducibility,
+        observabilityCoverage,
+      });
+      await emitRunEvent({
+        runId,
+        seq: seq++,
+        type: "receipts.created",
+        data: { ciUrl, ciSummary, status: "blocked" },
+      });
+      await emitRunEvent({
+        runId,
+        seq: seq++,
+        type: "run.blocked",
+        data: {
+          reason: "CI did not complete before the workflow watch window ended",
+          ciStatus: ciResult.status,
+          ciSummary,
+          ciUrl,
+        },
+      });
+
+      return {
+        runId,
+        status: "blocked" as const,
+        pr,
+      };
+    }
 
     const confidence = computePatchConfidence({
       reproduced: true,
